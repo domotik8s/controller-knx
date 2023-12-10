@@ -1,0 +1,46 @@
+---
+apiVersion: domotik8s.io/v1beta1
+kind: NumericSensor
+metadata:
+  name: livingroom-temperature
+  labels:
+    area: "House"
+    floor: "GroundFloor"
+    room: "LivingRoom"
+    name: "Temperature"
+spec:
+  connection:
+    type: "knx"
+    config:
+      address: "6/7/8"
+  state:
+    value: 23
+    unit: "C"
+status:
+  state: 
+    value: 23
+    unit: "C"
+---
+apiVersion: domotik8s.io/v1beta1
+kind: 
+metadata:
+  name: livingroom-thermostat
+  labels:
+    area: "House"
+    floor: "GroundFloor"
+    room: "LivingRoom"
+    name: "Thermostat"
+spec:
+  connection:
+    type: "knx"
+    config:
+      address: "5/6/7"
+  state:
+    value: 23
+    unit: "C"
+status:
+  state: 
+    value: 23
+    unit: "C"
+---
+

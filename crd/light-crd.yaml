@@ -1,0 +1,95 @@
+---
+apiVersion: apiextensions.k8s.io/v1
+kind: CustomResourceDefinition
+metadata:
+  name: lights.domotik8s.io
+spec:
+  group: domotik8s.io
+  versions:
+    - name: v1beta1
+      served: true
+      storage: true
+      subresources:
+        status: {}
+      schema:
+        openAPIV3Schema:
+          type: object
+          properties:
+            spec:
+              type: object
+              properties:
+                # Whether to accept the current state as the desired state when the current state changes
+                enforce:
+                  type: boolean
+                  default: False
+                # Addresses the respective system controller (knx, hue, etc) and device within that system 
+                connection:
+                  type: object
+                  properties:
+                    # Name of the system, such as "knx" or "hue"
+                    system: 
+                      type: string
+                    # An identifier for the system controller when using
+                    # multipl of the same type
+                    instance: 
+                      type: string
+                    # A connection object specific to the system controller
+                    # that identifies the device in the system
+                    config:
+                      type: object
+                      x-kubernetes-preserve-unknown-fields: true
+                  required:
+                  - system
+                  - config
+                # Every device type (light, power socket, contact, etc)  should
+                # at least one capability. This property is used to find out
+                # when a device does not have all the capabilities.
+                capabilities:
+                  type: object
+                  properties:
+                    power:
+                      type: boolean
+                    brightness:
+                      type: boolean
+                    color:
+                      type: boolean
+                      pattern: '^#([A-Fa-f0-9]{6}|[A-Fa-f0-9]{3})$'    
+                # The desired state of the device. If left empty, initialized
+                # with the current state
+                state:
+                  type: object
+                  properties:
+                    power:
+                      type: boolean
+                    brightness:
+                      type: integer
+                      minimum: 0
+                      maximum: 100
+                    color:
+                      type: string
+                      pattern: '^#([A-Fa-f0-9]{6}|[A-Fa-f0-9]{3})$'    
+            status:
+              type: object
+              properties:
+                # The current state of the device
+                state:          
+                  type: object
+                  properties:
+                    power:
+                      type: boolean
+                    brightness:
+                      type: integer
+                      minimum: 0
+                      maximum: 100
+                    color:
+                      type: string
+                # Timestamp of the last state change
+                lastUpdated:
+                    type: string
+                    format: date-time
+  scope: Cluster
+  names:
+    plural: lights
+    singular: light
+    kind: Light
+    shortNames: []

@@ -1,0 +1,27 @@
+logging:
+  level:
+    root: INFO
+    "[io.kubernetes]": INFO
+    "[org.springframework]": INFO
+    "[org.reflections]": ERROR
+    "[io.domotik8s]": DEBUG
+
+management:
+  endpoint:
+    health:
+      probes:
+        enabled: true
+  health:
+    livenessState:
+      enabled: true
+    readinessState:
+      enabled: true
+
+knx:
+  instance: knx
+  connection:
+    ip:
+      remoteAddress: 10.0.1.5
+      remotePort: 3671
+      localAddress: 10.0.20.57
+      localPort: 32123
