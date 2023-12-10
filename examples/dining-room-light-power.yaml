@@ -1,0 +1,15 @@
+apiVersion: domotik8s.io/v1beta1
+kind: BooleanProperty
+metadata:
+  name: dining-room-main-light-power
+  labels:
+    area: "House"
+    floor: "GroundFloor"
+    room: "DiningRoom"
+    name: "CeilingLight"
+spec:
+  address:
+    system: "knx"
+    read: "0/0/23"
+    write: "0/0/21"
+    dpt: "1.001"

@@ -1,0 +1,15 @@
+apiVersion: domotik8s.io/v1beta1
+kind: NumberProperty
+metadata:
+  name: dining-room-main-light-brightness
+  labels:
+    area: "House"
+    floor: "GroundFloor"
+    room: "DiningRoom"
+    name: "CeilingLight"
+spec:
+  address:
+    system: "knx"
+    read: "0/0/24"
+    write: "0/0/25"
+    dpt: "5.001"
