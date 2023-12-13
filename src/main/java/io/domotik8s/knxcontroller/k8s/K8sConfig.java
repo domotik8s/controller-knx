@@ -2,8 +2,8 @@ package io.domotik8s.knxcontroller.k8s;
 
 import io.domotik8s.knxcontroller.k8s.ctrl.light.model.KnxLight;
 import io.domotik8s.knxcontroller.k8s.ctrl.light.model.KnxLightList;
-import io.domotik8s.knxcontroller.k8s.ctrl.numericsensor.model.KnxNumericSensor;
-import io.domotik8s.knxcontroller.k8s.ctrl.numericsensor.model.KnxNumericSensorList;
+import io.domotik8s.knxcontroller.k8s.ctrl.sensor.numeric.model.KnxNumericSensor;
+import io.domotik8s.knxcontroller.k8s.ctrl.sensor.numeric.model.KnxNumericSensorList;
 import io.kubernetes.client.extended.controller.Controller;
 import io.kubernetes.client.informer.SharedIndexInformer;
 import io.kubernetes.client.informer.SharedInformerFactory;

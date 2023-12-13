@@ -1,8 +1,8 @@
-package io.domotik8s.knxcontroller.k8s.ctrl.numericsensor;
+package io.domotik8s.knxcontroller.k8s.ctrl.sensor.numeric;
 
-import io.domotik8s.knxcontroller.k8s.ctrl.numericsensor.model.KnxNumericSensor;
-import io.domotik8s.knxcontroller.k8s.ctrl.numericsensor.model.KnxNumericSensorConnectionConfig;
-import io.domotik8s.knxcontroller.k8s.ctrl.numericsensor.model.KnxNumericSensorList;
+import io.domotik8s.knxcontroller.k8s.ctrl.sensor.numeric.model.KnxNumericSensor;
+import io.domotik8s.knxcontroller.k8s.ctrl.sensor.numeric.model.KnxNumericSensorConnectionConfig;
+import io.domotik8s.knxcontroller.k8s.ctrl.sensor.numeric.model.KnxNumericSensorList;
 import io.domotik8s.knxcontroller.knx.client.GroupAddressListener;
 import io.domotik8s.knxcontroller.knx.client.KnxClient;
 import io.domotik8s.knxcontroller.knx.convert.StringToDptConverter;
