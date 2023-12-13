@@ -46,6 +46,8 @@ public class LightSyncer implements ResourceEventHandler<V1Beta1KnxLight>, Group
 
     private final Set<GroupAddress> subscriptions = new HashSet<>();
 
+    private final StringToGroupAddressConverter gaConverter = new StringToGroupAddressConverter();
+
 
     @PostConstruct
     public void setup() {
@@ -164,20 +166,27 @@ public class LightSyncer implements ResourceEventHandler<V1Beta1KnxLight>, Group
         if (config.isEmpty()) return;
 
         // Power
-        Optional<String> powerGAStr = config.map(V1Beta1LightKnxConnectionConfig::getPower)
-                .map(AddressPair::getRead);
-
-        if (powerGAStr.isPresent()) {
-            StringToGroupAddressConverter converter = new StringToGroupAddressConverter();
-            GroupAddress powerGA = converter.convert(powerGAStr.get());
-            subscriptions.add(powerGA);
-            logger.debug("Subscribed to GA {} to receive power updates", powerGA);
-        }
+        config.map(V1Beta1LightKnxConnectionConfig::getPower)
+                .map(AddressPair::getRead)
+                .ifPresent(this::subscribe);
 
         // Brightness
+        config.map(V1Beta1LightKnxConnectionConfig::getBrightness)
+                .map(AddressPair::getRead)
+                .ifPresent(this::subscribe);
 
         // Color
+        config.map(V1Beta1LightKnxConnectionConfig::getColor)
+                .map(AddressPair::getRead)
+                .ifPresent(this::subscribe);
     }
+
+    private void subscribe(String gaStr) {
+        GroupAddress ga = gaConverter.convert(gaStr);
+        subscriptions.add(ga);
+        logger.debug("Subscribed to GA {} to receive power updates", gaStr);
+    }
+
 
     private void unsubscribe(V1Beta1KnxLight v1beta1Light) {
         Optional<V1Beta1LightKnxConnectionConfig> config = Optional.ofNullable(v1beta1Light.getSpec())
@@ -187,19 +196,26 @@ public class LightSyncer implements ResourceEventHandler<V1Beta1KnxLight>, Group
         if (config.isEmpty()) return;
 
         // Power
-        Optional<String> powerGAStr = config.map(V1Beta1LightKnxConnectionConfig::getPower)
-                .map(AddressPair::getRead);
-
-        if (powerGAStr.isPresent()) {
-            StringToGroupAddressConverter converter = new StringToGroupAddressConverter();
-            GroupAddress powerGA = converter.convert(powerGAStr.get());
-            subscriptions.remove(powerGA);
-            logger.debug("Unsubscribed to GA {} to receive power updates", powerGA);
-        }
+        config.map(V1Beta1LightKnxConnectionConfig::getPower)
+                .map(AddressPair::getRead)
+                .ifPresent(this::unsubscribe);
 
         // Brightness
+        config.map(V1Beta1LightKnxConnectionConfig::getBrightness)
+                .map(AddressPair::getRead)
+                .ifPresent(this::unsubscribe);
 
         // Color
+        config.map(V1Beta1LightKnxConnectionConfig::getColor)
+                .map(AddressPair::getRead)
+                .ifPresent(this::unsubscribe);
+    }
+
+
+    private void unsubscribe(String gaStr) {
+        GroupAddress ga = gaConverter.convert(gaStr);
+        subscriptions.remove(ga);
+        logger.debug("Unsubscribed to GA {} to receive updates", gaStr);
     }
 
 }
