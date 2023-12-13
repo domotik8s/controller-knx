@@ -1,6 +1,6 @@
 package io.domotik8s.knxcontroller.k8s.ctrl.light;
 
-import io.domotik8s.knxcontroller.k8s.Constants;
+import io.domotik8s.knxcontroller.k8s.K8sConstants;
 import io.domotik8s.knxcontroller.k8s.ctrl.AbstractReconciler;
 import io.domotik8s.knxcontroller.k8s.ctrl.model.PropertyKnxConfig;
 import io.domotik8s.knxcontroller.k8s.ctrl.light.model.KnxLight;
@@ -70,7 +70,7 @@ public class LightReconciler extends AbstractReconciler<KnxLight, KnxLightList> 
 
     private boolean filterSystemAndInstance(KnxLight light) {
         Optional<String> resourceSystemType = Optional.ofNullable(light.getSpec()).map(LightSpec::getConnection).map(LightSpecConnection::getSystem);
-        boolean typeMatch = Constants.SYSTEM_TYPE.equals(resourceSystemType.get());
+        boolean typeMatch = K8sConstants.SYSTEM_TYPE.equals(resourceSystemType.get());
 
         Optional<String> thisInstance = Optional.ofNullable(properties.getInstance());
         Optional<String> resourceInstance = Optional.ofNullable(light.getSpec()).map(LightSpec::getConnection).map(LightSpecConnection::getSystem);
