@@ -8,6 +8,8 @@ public class Constants {
 
     public static String LIGHT_PLURAL = "lights";
 
+    public static String NUMERIC_SENSOR_PLURAL = "numericsensors";
+
     public static String SYSTEM_TYPE = "knx";
 
 }

@@ -1,6 +1,6 @@
 package io.domotik8s.knxcontroller.k8s.ctrl.light;
 
-import io.domotik8s.knxcontroller.k8s.ctrl.light.model.V1Beta1KnxLight;
+import io.domotik8s.knxcontroller.k8s.ctrl.light.model.KnxLight;
 import io.kubernetes.client.extended.controller.Controller;
 import io.kubernetes.client.extended.controller.builder.ControllerBuilder;
 import io.kubernetes.client.informer.SharedIndexInformer;
@@ -18,12 +18,12 @@ public class LightConfig {
 
     private Logger logger = LoggerFactory.getLogger(LightConfig.class);
 
-    @Bean
-    public Controller lightController(SharedInformerFactory informerFactory, LightReconciler reconciler, SharedIndexInformer<V1Beta1KnxLight> lightInformer) {
+    @Bean("lightController")
+    public Controller lightController(SharedInformerFactory informerFactory, LightReconciler reconciler, SharedIndexInformer<KnxLight> lightInformer) {
         return ControllerBuilder
                 .defaultBuilder(informerFactory)
                 .watch(workQueue -> ControllerBuilder
-                        .controllerWatchBuilder(V1Beta1KnxLight.class, workQueue)
+                        .controllerWatchBuilder(KnxLight.class, workQueue)
                         .withResyncPeriod(Duration.of(1, ChronoUnit.SECONDS))
                         .withOnAddFilter(reconciler::onAddFilter)
                         .withOnUpdateFilter(reconciler::onUpdateFilter)

@@ -62,7 +62,7 @@ spec:
                     power:
                       type: boolean
                     brightness:
-                      type: integer
+                      type: number
                       minimum: 0
                       maximum: 100
                     color:
@@ -78,7 +78,7 @@ spec:
                     power:
                       type: boolean
                     brightness:
-                      type: integer
+                      type: number
                       minimum: 0
                       maximum: 100
                     color:

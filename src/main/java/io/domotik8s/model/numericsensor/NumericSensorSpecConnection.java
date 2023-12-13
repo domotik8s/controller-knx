@@ -1,11 +1,11 @@
-package io.domotik8s.model;
+package io.domotik8s.model.numericsensor;
 
 import com.google.gson.annotations.SerializedName;
 import io.swagger.annotations.ApiModelProperty;
 import lombok.Data;
 
 @Data
-public class V1beta1LightSpecConnection<C> {
+public class NumericSensorSpecConnection<C> {
 
   @SerializedName("config")
   @ApiModelProperty(required = true, value = "")

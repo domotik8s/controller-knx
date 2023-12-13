@@ -1,14 +1,17 @@
 package io.domotik8s.knxcontroller.k8s.ctrl.light;
 
-import io.domotik8s.knxcontroller.k8s.ctrl.model.AddressPair;
-import io.domotik8s.knxcontroller.k8s.ctrl.light.model.V1Beta1KnxLight;
-import io.domotik8s.knxcontroller.k8s.ctrl.light.model.V1Beta1KnxLightList;
-import io.domotik8s.knxcontroller.k8s.ctrl.light.model.V1Beta1LightKnxConnectionConfig;
+import io.domotik8s.knxcontroller.k8s.ctrl.model.PropertyKnxConfig;
+import io.domotik8s.knxcontroller.k8s.ctrl.light.model.KnxLight;
+import io.domotik8s.knxcontroller.k8s.ctrl.light.model.KnxLightList;
+import io.domotik8s.knxcontroller.k8s.ctrl.light.model.KnxLightConnectionConfig;
 import io.domotik8s.knxcontroller.knx.client.GroupAddressListener;
 import io.domotik8s.knxcontroller.knx.client.KnxClient;
 import io.domotik8s.knxcontroller.knx.convert.StringToDptConverter;
 import io.domotik8s.knxcontroller.knx.convert.StringToGroupAddressConverter;
-import io.domotik8s.model.*;
+import io.domotik8s.model.light.LightSpec;
+import io.domotik8s.model.light.LightSpecConnection;
+import io.domotik8s.model.light.LightState;
+import io.domotik8s.model.light.LightStatus;
 import io.kubernetes.client.informer.ResourceEventHandler;
 import io.kubernetes.client.informer.SharedIndexInformer;
 import io.kubernetes.client.util.generic.GenericKubernetesApi;
@@ -21,10 +24,7 @@ import org.springframework.stereotype.Component;
 import tuwien.auto.calimero.GroupAddress;
 import tuwien.auto.calimero.IndividualAddress;
 import tuwien.auto.calimero.KNXException;
-import tuwien.auto.calimero.dptxlator.DPT;
-import tuwien.auto.calimero.dptxlator.DPTXlator;
-import tuwien.auto.calimero.dptxlator.DPTXlatorBoolean;
-import tuwien.auto.calimero.dptxlator.TranslatorTypes;
+import tuwien.auto.calimero.dptxlator.*;
 
 import javax.annotation.PostConstruct;
 import java.util.HashSet;
@@ -33,14 +33,14 @@ import java.util.Set;
 
 @Component
 @RequiredArgsConstructor(onConstructor = @__(@Autowired))
-public class LightSyncer implements ResourceEventHandler<V1Beta1KnxLight>, GroupAddressListener {
+public class LightSyncer implements ResourceEventHandler<KnxLight>, GroupAddressListener {
 
     private final Logger logger = LoggerFactory.getLogger(LightSyncer.class);
 
 
-    private final SharedIndexInformer<V1Beta1KnxLight> informer;
+    private final SharedIndexInformer<KnxLight> informer;
 
-    private final GenericKubernetesApi<V1Beta1KnxLight, V1Beta1KnxLightList> lightClient;
+    private final GenericKubernetesApi<KnxLight, KnxLightList> lightClient;
 
     private final KnxClient knxClient;
 
@@ -48,6 +48,7 @@ public class LightSyncer implements ResourceEventHandler<V1Beta1KnxLight>, Group
 
     private final StringToGroupAddressConverter gaConverter = new StringToGroupAddressConverter();
 
+    private final StringToDptConverter dptConverter = new StringToDptConverter();
 
     @PostConstruct
     public void setup() {
@@ -83,17 +84,17 @@ public class LightSyncer implements ResourceEventHandler<V1Beta1KnxLight>, Group
      */
 
     @Override
-    public void onAdd(V1Beta1KnxLight v1beta1Light) {
+    public void onAdd(KnxLight v1beta1Light) {
         subscribe(v1beta1Light);
     }
 
     @Override
-    public void onUpdate(V1Beta1KnxLight v1beta1Light, V1Beta1KnxLight apiType1) {
+    public void onUpdate(KnxLight v1beta1Light, KnxLight apiType1) {
         subscribe(v1beta1Light);
     }
 
     @Override
-    public void onDelete(V1Beta1KnxLight v1beta1Light, boolean b) {
+    public void onDelete(KnxLight v1beta1Light, boolean b) {
         unsubscribe(v1beta1Light);
     }
 
@@ -104,80 +105,119 @@ public class LightSyncer implements ResourceEventHandler<V1Beta1KnxLight>, Group
 
     private void updateLightState(GroupAddress destination, byte[] asdu) {
         // Get all available lights
-        KubernetesApiResponse<V1Beta1KnxLightList> listResp = lightClient.list();
-        V1Beta1KnxLightList list = listResp.getObject();
+        KubernetesApiResponse<KnxLightList> listResp = lightClient.list();
+        KnxLightList list = listResp.getObject();
 
         // Find the light that has destination as a read address and update that state property
-        for (V1Beta1KnxLight v1beta1Light: list.getItems()) {
-            Optional<V1Beta1LightKnxConnectionConfig> config = Optional.ofNullable(v1beta1Light.getSpec())
-                    .map(V1beta1LightSpec::getConnection)
-                    .map(V1beta1LightSpecConnection::getConfig);
+        for (KnxLight v1beta1Light: list.getItems()) {
+            Optional<KnxLightConnectionConfig> config = Optional.ofNullable(v1beta1Light.getSpec())
+                    .map(LightSpec::getConnection)
+                    .map(LightSpecConnection::getConfig);
+
+            if (config.isEmpty()) continue;
 
             // Check power
-            Optional<String> powerGAStr = config.map(V1Beta1LightKnxConnectionConfig::getPower)
-                    .map(AddressPair::getRead);
+            if (config.get().getPower() != null) {
+                Optional<String> powerGAStr = config.map(KnxLightConnectionConfig::getPower).map(PropertyKnxConfig::getRead);
+                Optional<String> powerDPTStr = config.map(KnxLightConnectionConfig::getPower).map(PropertyKnxConfig::getDpt);
+                GroupAddress powerGA = gaConverter.convert(powerGAStr.get());
+                DPT powerDPT = dptConverter.convert(powerDPTStr.get());
 
-            Optional<String> powerDPTStr = config.map(V1Beta1LightKnxConnectionConfig::getPower)
-                    .map(AddressPair::getDpt);
+                if (destination.equals(powerGA)) {
+                    // Update
+                    DPTXlator xlator = null;
+                    try {
+                        xlator = TranslatorTypes.createTranslator(powerDPT, asdu);
+                    } catch (KNXException e) {
+                        throw new RuntimeException(e);
+                    }
+                    DPTXlatorBoolean boolXlator = (DPTXlatorBoolean) xlator;
+                    Boolean value = boolXlator.getValueBoolean();
 
-            StringToGroupAddressConverter converter = new StringToGroupAddressConverter();
-            GroupAddress powerGA = converter.convert(powerGAStr.get());
+                    LightStatus status = Optional.ofNullable(v1beta1Light.getStatus()).orElse(new LightStatus());
 
-            StringToDptConverter dptConverter = new StringToDptConverter();
-            DPT powerDPT = dptConverter.convert(powerDPTStr.get());
+                    LightState state = Optional.ofNullable(status.getState()).orElse(new LightState());
+                    status.setState(state);
 
-            if (destination.equals(powerGA)) {
-                // Update
-                DPTXlator xlator = null;
-                try {
-                    xlator = TranslatorTypes.createTranslator(powerDPT, asdu);
-                } catch (KNXException e) {
-                    throw new RuntimeException(e);
+                    state.setPower(value);
+
+                    v1beta1Light.setStatus(status);
+
+                    if (!Boolean.TRUE.equals(v1beta1Light.getSpec().getEnforce())) {
+                        v1beta1Light.getSpec().setState(state);
+                        lightClient.update(v1beta1Light);
+                    }
+
+                    lightClient.updateStatus(v1beta1Light, (l) -> l.getStatus());
+                    return;
                 }
-                DPTXlatorBoolean boolXlator = (DPTXlatorBoolean) xlator;
-                Boolean value = boolXlator.getValueBoolean();
-
-                V1beta1LightStatus status = Optional.ofNullable(v1beta1Light.getStatus()).orElse(new V1beta1LightStatus());
-
-                V1beta1LightState state = Optional.ofNullable(status.getState()).orElse(new V1beta1LightState());
-                status.setState(state);
-
-                state.setPower(value);
-
-                v1beta1Light.setStatus(status);
-
-                if (!Boolean.TRUE.equals(v1beta1Light.getSpec().getEnforce())) {
-                    v1beta1Light.getSpec().setState(state);
-                    lightClient.update(v1beta1Light);
-                }
-
-                lightClient.updateStatus(v1beta1Light, (l) -> l.getStatus());
-
-                return;
             }
+
+
+            // Check brightness
+            if (config.get().getBrightness() != null) {
+                Optional<String> brightnessGAStr = config.map(KnxLightConnectionConfig::getBrightness).map(PropertyKnxConfig::getRead);
+                Optional<String> brightnessDPTStr = config.map(KnxLightConnectionConfig::getBrightness).map(PropertyKnxConfig::getDpt);
+                GroupAddress brightnessGA = gaConverter.convert(brightnessGAStr.get());
+                DPT brightnessDPT = dptConverter.convert(brightnessDPTStr.get());
+
+                if (destination.equals(brightnessGA)) {
+
+                    // Update
+                    DPTXlator xlator = null;
+                    try {
+                        xlator = TranslatorTypes.createTranslator(brightnessDPT, asdu);
+                    } catch (KNXException e) {
+                        throw new RuntimeException(e);
+                    }
+                    DPTXlator8BitUnsigned floatXlator = (DPTXlator8BitUnsigned) xlator;
+                    double value = floatXlator.getNumericValue();
+
+                    LightStatus status = Optional.ofNullable(v1beta1Light.getStatus()).orElse(new LightStatus());
+
+                    LightState state = Optional.ofNullable(status.getState()).orElse(new LightState());
+                    status.setState(state);
+
+                    state.setBrightness(value);
+
+                    v1beta1Light.setStatus(status);
+
+                    if (!Boolean.TRUE.equals(v1beta1Light.getSpec().getEnforce())) {
+                        v1beta1Light.getSpec().setState(state);
+                        lightClient.update(v1beta1Light);
+                    }
+
+                    lightClient.updateStatus(v1beta1Light, (l) -> l.getStatus());
+                    return;
+                }
+            }
+
         }
     }
 
-    private void subscribe(V1Beta1KnxLight v1beta1Light) {
-        Optional<V1Beta1LightKnxConnectionConfig> config = Optional.ofNullable(v1beta1Light.getSpec())
-                .map(V1beta1LightSpec::getConnection)
-                .map(V1beta1LightSpecConnection::getConfig);
+    private void subscribe(KnxLight v1beta1Light) {
+        Optional<KnxLightConnectionConfig> config = Optional.ofNullable(v1beta1Light.getSpec())
+                .map(LightSpec::getConnection)
+                .map(LightSpecConnection::getConfig);
 
-        if (config.isEmpty()) return;
+        if (config.isEmpty()) {
+            logger.warn("Unable to subscribe to light {}. Not value found for spec.connection.config", v1beta1Light.getMetadata().getName());
+            return;
+        }
 
         // Power
-        config.map(V1Beta1LightKnxConnectionConfig::getPower)
-                .map(AddressPair::getRead)
+        config.map(KnxLightConnectionConfig::getPower)
+                .map(PropertyKnxConfig::getRead)
                 .ifPresent(this::subscribe);
 
         // Brightness
-        config.map(V1Beta1LightKnxConnectionConfig::getBrightness)
-                .map(AddressPair::getRead)
+        config.map(KnxLightConnectionConfig::getBrightness)
+                .map(PropertyKnxConfig::getRead)
                 .ifPresent(this::subscribe);
 
         // Color
-        config.map(V1Beta1LightKnxConnectionConfig::getColor)
-                .map(AddressPair::getRead)
+        config.map(KnxLightConnectionConfig::getColor)
+                .map(PropertyKnxConfig::getRead)
                 .ifPresent(this::subscribe);
     }
 
@@ -188,26 +228,29 @@ public class LightSyncer implements ResourceEventHandler<V1Beta1KnxLight>, Group
     }
 
 
-    private void unsubscribe(V1Beta1KnxLight v1beta1Light) {
-        Optional<V1Beta1LightKnxConnectionConfig> config = Optional.ofNullable(v1beta1Light.getSpec())
-                .map(V1beta1LightSpec::getConnection)
-                .map(V1beta1LightSpecConnection::getConfig);
+    private void unsubscribe(KnxLight v1beta1Light) {
+        Optional<KnxLightConnectionConfig> config = Optional.ofNullable(v1beta1Light.getSpec())
+                .map(LightSpec::getConnection)
+                .map(LightSpecConnection::getConfig);
 
-        if (config.isEmpty()) return;
+        if (config.isEmpty()) {
+            logger.warn("Unable to unsubscribe from light {}. Not value found for spec.connection.config", v1beta1Light.getMetadata().getName());
+            return;
+        }
 
         // Power
-        config.map(V1Beta1LightKnxConnectionConfig::getPower)
-                .map(AddressPair::getRead)
+        config.map(KnxLightConnectionConfig::getPower)
+                .map(PropertyKnxConfig::getRead)
                 .ifPresent(this::unsubscribe);
 
         // Brightness
-        config.map(V1Beta1LightKnxConnectionConfig::getBrightness)
-                .map(AddressPair::getRead)
+        config.map(KnxLightConnectionConfig::getBrightness)
+                .map(PropertyKnxConfig::getRead)
                 .ifPresent(this::unsubscribe);
 
         // Color
-        config.map(V1Beta1LightKnxConnectionConfig::getColor)
-                .map(AddressPair::getRead)
+        config.map(KnxLightConnectionConfig::getColor)
+                .map(PropertyKnxConfig::getRead)
                 .ifPresent(this::unsubscribe);
     }
 

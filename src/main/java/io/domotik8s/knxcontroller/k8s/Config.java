@@ -1,7 +1,9 @@
 package io.domotik8s.knxcontroller.k8s;
 
-import io.domotik8s.knxcontroller.k8s.ctrl.light.model.V1Beta1KnxLight;
-import io.domotik8s.knxcontroller.k8s.ctrl.light.model.V1Beta1KnxLightList;
+import io.domotik8s.knxcontroller.k8s.ctrl.light.model.KnxLight;
+import io.domotik8s.knxcontroller.k8s.ctrl.light.model.KnxLightList;
+import io.domotik8s.knxcontroller.k8s.ctrl.numericsensor.model.KnxNumericSensor;
+import io.domotik8s.knxcontroller.k8s.ctrl.numericsensor.model.KnxNumericSensorList;
 import io.kubernetes.client.extended.controller.Controller;
 import io.kubernetes.client.informer.SharedIndexInformer;
 import io.kubernetes.client.informer.SharedInformerFactory;
@@ -35,17 +37,31 @@ public class Config {
     }
 
     @Bean(name = "lightClient")
-    public GenericKubernetesApi<V1Beta1KnxLight, V1Beta1KnxLightList> lightClient(ApiClient client) {
+    public GenericKubernetesApi<KnxLight, KnxLightList> lightClient(ApiClient client) {
         return new GenericKubernetesApi(
-                V1Beta1KnxLight.class, V1Beta1KnxLightList.class,
+                KnxLight.class, KnxLightList.class,
                 API_GROUP, API_VERSION, LIGHT_PLURAL,
                 client
         );
     }
 
+    @Bean(name = "numericSensorClient")
+    public GenericKubernetesApi<KnxNumericSensor, KnxNumericSensorList> numericSensorClient(ApiClient client) {
+        return new GenericKubernetesApi(
+                KnxNumericSensor.class, KnxNumericSensorList.class,
+                API_GROUP, API_VERSION, NUMERIC_SENSOR_PLURAL,
+                client
+        );
+    }
+
     @Bean
-    public SharedIndexInformer<V1Beta1KnxLight> lightInformer(SharedInformerFactory informerFactory, GenericKubernetesApi<V1Beta1KnxLight, V1Beta1KnxLightList> lightClient) {
-        return informerFactory.sharedIndexInformerFor(lightClient, V1Beta1KnxLight.class, 0);
+    public SharedIndexInformer<KnxLight> lightInformer(SharedInformerFactory informerFactory, GenericKubernetesApi<KnxLight, KnxLightList> lightClient) {
+        return informerFactory.sharedIndexInformerFor(lightClient, KnxLight.class, 0);
+    }
+
+    @Bean
+    public SharedIndexInformer<KnxNumericSensor> numericSensorInformer(SharedInformerFactory informerFactory, GenericKubernetesApi<KnxNumericSensor, KnxNumericSensorList> numericSensorClient) {
+        return informerFactory.sharedIndexInformerFor(numericSensorClient, KnxNumericSensor.class, 0);
     }
 
     @Bean

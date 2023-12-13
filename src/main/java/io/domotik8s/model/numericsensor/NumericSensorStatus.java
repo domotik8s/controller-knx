@@ -1,4 +1,4 @@
-package io.domotik8s.model;
+package io.domotik8s.model.numericsensor;
 
 import com.google.gson.annotations.SerializedName;
 import lombok.Data;
@@ -7,13 +7,13 @@ import java.time.OffsetDateTime;
 
 
 @Data
-public class V1beta1LightStatus {
+public class NumericSensorStatus {
 
   @SerializedName("lastUpdated")
   private OffsetDateTime lastUpdated;
 
   @SerializedName("state")
-  private V1beta1LightState state;
+  private NumericSensorState state;
 
 }
 

@@ -3,7 +3,7 @@ package io.domotik8s.knxcontroller.k8s.ctrl.model;
 import lombok.Data;
 
 @Data
-public class AddressPair {
+public class PropertyKnxConfig {
 
     private String read;
 

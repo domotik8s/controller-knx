@@ -11,9 +11,7 @@
  */
 
 
-package io.domotik8s.model;
-
-import java.util.Objects;
+package io.domotik8s.model.numericsensor;
 
 import com.google.gson.annotations.SerializedName;
 import io.kubernetes.client.openapi.models.V1ListMeta;
@@ -22,13 +20,14 @@ import io.swagger.annotations.ApiModelProperty;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Objects;
 
 /**
  * LightList is a list of Light
  */
 @ApiModel(description = "LightList is a list of Light")
 @javax.annotation.Generated(value = "org.openapitools.codegen.languages.JavaClientCodegen", date = "2023-12-10T06:32:52.423Z[Etc/UTC]")
-public abstract class V1beta1LightList<T extends V1beta1Light> implements io.kubernetes.client.common.KubernetesListObject {
+public abstract class NumericSensorList<T extends NumericSensor> implements io.kubernetes.client.common.KubernetesListObject {
   public static final String SERIALIZED_NAME_API_VERSION = "apiVersion";
   @SerializedName(SERIALIZED_NAME_API_VERSION)
   private String apiVersion;
@@ -46,7 +45,7 @@ public abstract class V1beta1LightList<T extends V1beta1Light> implements io.kub
   private V1ListMeta metadata = null;
 
 
-  public V1beta1LightList apiVersion(String apiVersion) {
+  public NumericSensorList apiVersion(String apiVersion) {
     
     this.apiVersion = apiVersion;
     return this;
@@ -69,12 +68,12 @@ public abstract class V1beta1LightList<T extends V1beta1Light> implements io.kub
   }
 
 
-  public V1beta1LightList items(List<T> items) {
+  public NumericSensorList items(List<T> items) {
     this.items = items;
     return this;
   }
 
-  public V1beta1LightList addItemsItem(T itemsItem) {
+  public NumericSensorList addItemsItem(T itemsItem) {
     this.items.add(itemsItem);
     return this;
   }
@@ -95,7 +94,7 @@ public abstract class V1beta1LightList<T extends V1beta1Light> implements io.kub
   }
 
 
-  public V1beta1LightList kind(String kind) {
+  public NumericSensorList kind(String kind) {
     
     this.kind = kind;
     return this;
@@ -118,7 +117,7 @@ public abstract class V1beta1LightList<T extends V1beta1Light> implements io.kub
   }
 
 
-  public V1beta1LightList metadata(V1ListMeta metadata) {
+  public NumericSensorList metadata(V1ListMeta metadata) {
     
     this.metadata = metadata;
     return this;
@@ -149,7 +148,7 @@ public abstract class V1beta1LightList<T extends V1beta1Light> implements io.kub
     if (o == null || getClass() != o.getClass()) {
       return false;
     }
-    V1beta1LightList v1beta1LightList = (V1beta1LightList) o;
+    NumericSensorList v1beta1LightList = (NumericSensorList) o;
     return Objects.equals(this.apiVersion, v1beta1LightList.apiVersion) &&
         Objects.equals(this.items, v1beta1LightList.items) &&
         Objects.equals(this.kind, v1beta1LightList.kind) &&

@@ -1,4 +1,4 @@
-package io.domotik8s.model;
+package io.domotik8s.model.numericsensor;
 
 import com.google.gson.annotations.SerializedName;
 import io.kubernetes.client.common.KubernetesObject;
@@ -9,7 +9,7 @@ import lombok.Data;
 import javax.annotation.Nullable;
 
 @Data
-public abstract class V1beta1Light<C> implements KubernetesObject {
+public abstract class NumericSensor<C> implements KubernetesObject {
 
     @Nullable
     @SerializedName("apiVersion")
@@ -26,10 +26,10 @@ public abstract class V1beta1Light<C> implements KubernetesObject {
 
     @SerializedName("spec")
     @ApiModelProperty(value = "")
-    private V1beta1LightSpec<C> spec;
+    private NumericSensorSpec<C> spec;
 
     @SerializedName("status")
     @ApiModelProperty(value = "")
-    private V1beta1LightStatus status;
+    private NumericSensorStatus status;
 
 }

@@ -1,0 +1,15 @@
+apiVersion: domotik8s.io/v1beta1
+kind: NumericSensor
+metadata:
+  name: office-temperature
+  labels:
+    area: "House"
+    floor: "FirstFloor"
+    room: "Office"
+    name: "Temperature"
+spec:
+  connection:
+    system: "knx"
+    config:
+      address: "2/1/6"
+      dpt: "9.001"
