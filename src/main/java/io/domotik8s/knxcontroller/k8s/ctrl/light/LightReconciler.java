@@ -1,5 +1,6 @@
 package io.domotik8s.knxcontroller.k8s.ctrl.light;
 
+import io.domotik8s.knxcontroller.k8s.Constants;
 import io.domotik8s.knxcontroller.k8s.ctrl.AbstractReconciler;
 import io.domotik8s.knxcontroller.k8s.ctrl.model.AddressPair;
 import io.domotik8s.knxcontroller.k8s.ctrl.light.model.V1Beta1KnxLight;
@@ -8,6 +9,7 @@ import io.domotik8s.knxcontroller.k8s.ctrl.light.model.V1Beta1LightKnxConnection
 import io.domotik8s.knxcontroller.knx.client.KnxClient;
 import io.domotik8s.knxcontroller.knx.convert.StringToDptConverter;
 import io.domotik8s.knxcontroller.knx.convert.StringToGroupAddressConverter;
+import io.domotik8s.knxcontroller.knx.properties.KnxProperties;
 import io.domotik8s.model.*;
 import io.kubernetes.client.informer.SharedIndexInformer;
 import io.kubernetes.client.util.generic.GenericKubernetesApi;
@@ -37,11 +39,49 @@ public class LightReconciler extends AbstractReconciler<V1Beta1KnxLight, V1Beta1
     @Autowired
     private KnxClient knxClient;
 
+    @Autowired
+    private KnxProperties properties;
 
     @Override
     public GenericKubernetesApi<V1Beta1KnxLight, V1Beta1KnxLightList> getClient() {
         return lightClient;
     }
+
+
+    /*
+     * Filtering
+     */
+
+    public boolean onAddFilter(V1Beta1KnxLight light) {
+        return filterSystemAndInstance(light);
+    }
+
+    public boolean onUpdateFilter(V1Beta1KnxLight oldLight, V1Beta1KnxLight newLight) {
+        return filterSystemAndInstance(newLight);
+    }
+
+    public boolean onDeleteFilter(V1Beta1KnxLight light, Boolean value) {
+        return filterSystemAndInstance(light);
+    }
+
+    private boolean filterSystemAndInstance(V1Beta1KnxLight light) {
+        Optional<String> resourceSystemType = Optional.ofNullable(light.getSpec()).map(V1beta1LightSpec::getConnection).map(V1beta1LightSpecConnection::getSystem);
+        boolean typeMatch = Constants.SYSTEM_TYPE.equals(resourceSystemType.get());
+
+        Optional<String> thisInstance = Optional.ofNullable(properties.getInstance());
+        Optional<String> resourceInstance = Optional.ofNullable(light.getSpec()).map(V1beta1LightSpec::getConnection).map(V1beta1LightSpecConnection::getSystem);
+
+        boolean instanceMatch = true;
+        if (thisInstance.isPresent()) {
+            instanceMatch = thisInstance.get().equals(resourceInstance.orElse(null));
+        }
+
+        return typeMatch && instanceMatch;
+    }
+
+    /*
+     * Reconciliation
+     */
 
     @Override
     public void reconcileState(V1Beta1KnxLight light) throws KNXException {
@@ -88,6 +128,5 @@ public class LightReconciler extends AbstractReconciler<V1Beta1KnxLight, V1Beta1
         getLogger().debug("Sending to GA {}: {}", writeGA, value);
         knxClient.write(writeGA, xlator);
     }
-
 
 }

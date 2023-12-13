@@ -6,7 +6,6 @@ import io.kubernetes.client.extended.controller.Controller;
 import io.kubernetes.client.informer.SharedIndexInformer;
 import io.kubernetes.client.informer.SharedInformerFactory;
 import io.kubernetes.client.openapi.ApiClient;
-import io.kubernetes.client.util.Config;
 import io.kubernetes.client.util.generic.GenericKubernetesApi;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -23,14 +22,14 @@ import java.util.concurrent.TimeUnit;
 import static io.domotik8s.knxcontroller.k8s.Constants.*;
 
 @Configuration
-public class K8sConfig {
+public class Config {
 
-    private Logger logger = LoggerFactory.getLogger(K8sConfig.class);
+    private Logger logger = LoggerFactory.getLogger(Config.class);
 
 
     @Bean
     public ApiClient apiClient() throws IOException {
-        ApiClient client = Config.defaultClient();
+        ApiClient client = io.kubernetes.client.util.Config.defaultClient();
         io.kubernetes.client.openapi.Configuration.setDefaultApiClient(client);
         return client;
     }

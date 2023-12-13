@@ -25,6 +25,9 @@ public class LightConfig {
                 .watch(workQueue -> ControllerBuilder
                         .controllerWatchBuilder(V1Beta1KnxLight.class, workQueue)
                         .withResyncPeriod(Duration.of(1, ChronoUnit.SECONDS))
+                        .withOnAddFilter(reconciler::onAddFilter)
+                        .withOnUpdateFilter(reconciler::onUpdateFilter)
+                        .withOnDeleteFilter(reconciler::onDeleteFilter)
                         .build())
                 .withWorkerCount(2)
                 .withReconciler(reconciler)
