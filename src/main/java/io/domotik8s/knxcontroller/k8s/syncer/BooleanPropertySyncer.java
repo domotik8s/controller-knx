@@ -1,6 +1,5 @@
 package io.domotik8s.knxcontroller.k8s.syncer;
 
-import io.domotik8s.knxcontroller.k8s.reconciler.BooleanPropertyReconciler;
 import io.domotik8s.knxcontroller.knx.client.GroupAddressListener;
 import io.domotik8s.knxcontroller.knx.client.KnxClient;
 import io.domotik8s.knxcontroller.knx.convert.StringToDptConverter;
@@ -9,7 +8,6 @@ import io.domotik8s.model.generic.PropertySpec;
 import io.domotik8s.model.generic.PropertyStatus;
 import io.domotik8s.model.generic.bool.BooleanPropertySpec;
 import io.domotik8s.model.generic.bool.BooleanPropertyState;
-import io.domotik8s.model.generic.bool.BooleanPropertyStatus;
 import io.domotik8s.model.knx.KnxBooleanProperty;
 import io.domotik8s.model.knx.KnxBooleanPropertyList;
 import io.domotik8s.model.knx.KnxPropertyAddress;
