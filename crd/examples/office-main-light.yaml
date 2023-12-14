@@ -1,18 +1,16 @@
 apiVersion: domotik8s.io/v1beta1
-kind: Light
+kind: BooleanProperty
 metadata:
-  name: office-main-light
+  name: office-main-light-power
   labels:
     area: "House"
     floor: "FirstFloor"
     room: "Office"
     name: "CeilingLight"
+    property: "power"
 spec:
-  connection:
+  address:
     system: "knx"
-    config:
-      power:
-        read: "0/1/15"
-        write: "0/1/14"
-        dpt: "1.001"
-  enforce: false
+    read: "0/1/15"
+    write: "0/1/14"
+    dpt: "1.001"
