@@ -36,12 +36,20 @@ public class BooleanPropertyConfig {
     }
 
     @Bean("booleanPropertyInformer")
-    public SharedIndexInformer<KnxBooleanProperty> booleanPropertyInformer(SharedInformerFactory informerFactory, @Qualifier("booleanPropertyClient")  GenericKubernetesApi<KnxBooleanProperty, KnxBooleanPropertyList> booleanPropertyClient) {
+    public SharedIndexInformer<KnxBooleanProperty> booleanPropertyInformer(
+            SharedInformerFactory informerFactory,
+            @Qualifier("booleanPropertyClient") GenericKubernetesApi<KnxBooleanProperty, KnxBooleanPropertyList> booleanPropertyClient
+    ) {
         return informerFactory.sharedIndexInformerFor(booleanPropertyClient, KnxBooleanProperty.class, 0);
     }
 
     @Bean("booleanPropertyController")
-    public Controller booleanPropertyController(SharedInformerFactory informerFactory, BooleanPropertyReconciler reconciler, @Qualifier("booleanPropertyInformer") SharedIndexInformer<KnxBooleanProperty> booleanPropertyInformer, SystemInstanceFilter filter) {
+    public Controller booleanPropertyController(
+            SharedInformerFactory informerFactory,
+            BooleanPropertyReconciler reconciler,
+            @Qualifier("booleanPropertyInformer") SharedIndexInformer<KnxBooleanProperty> booleanPropertyInformer,
+            SystemInstanceFilter filter
+    ) {
         return ControllerBuilder
                 .defaultBuilder(informerFactory)
                 .watch(workQueue -> ControllerBuilder

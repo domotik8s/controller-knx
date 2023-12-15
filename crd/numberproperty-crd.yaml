@@ -38,11 +38,20 @@ spec:
                     value:
                       type: number
 
+                # ACCESS
+                access: 
+                  type: array
+                  items:
+                    type: string
+                    enum:
+                      - READ
+                      - WRITE
+
             # STATUS
             status:
               type: object
               properties:
-                
+
                 # STATE
                 state:
                   type: object

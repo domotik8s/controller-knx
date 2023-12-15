@@ -30,12 +30,6 @@ public class CommonConfig {
     }
 
     @Bean
-    public Predicate<Property> onAddFilter() {
-        return new SystemInstanceFilter();
-    }
-
-
-    @Bean
     public ExecutorService executorService() {
         return Executors.newCachedThreadPool();
     }

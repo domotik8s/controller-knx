@@ -8,4 +8,9 @@ import lombok.experimental.SuperBuilder;
 @Data
 @SuperBuilder
 public class NumberPropertySpec extends PropertySpec<KnxPropertyAddress, NumberPropertyState> {
+
+    public NumberPropertySpec() {
+
+    }
+
 }

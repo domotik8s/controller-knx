@@ -1,5 +1,5 @@
 apiVersion: domotik8s.io/v1beta1
-kind: NumericSensor
+kind: NumberProperty
 metadata:
   name: office-temperature
   labels:
@@ -8,8 +8,7 @@ metadata:
     room: "Office"
     name: "Temperature"
 spec:
-  connection:
+  address:
     system: "knx"
-    config:
-      address: "2/1/6"
-      dpt: "9.001"
+    read: "2/1/6"
+    dpt: "9.001"
