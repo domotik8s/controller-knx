@@ -57,6 +57,11 @@ public class NumberPropertyReconciler implements Reconciler {
 
         KnxNumberProperty resource = informer.getIndexer().getByKey(key);
 
+        if (resource == null) {
+            logger.warn("Received reconciliation request for resource {} but could not find it in indexer.", key);
+            return new Result(false);
+        }
+
         updateAccess(resource);
 
         // Get desired and current state
@@ -88,6 +93,11 @@ public class NumberPropertyReconciler implements Reconciler {
 
     private void updateAccess(KnxNumberProperty resource) {
         Optional<PropertySpec<KnxPropertyAddress, NumberPropertyState>> spec = Optional.ofNullable(resource).map(KnxNumberProperty::getSpec);
+
+        if (spec.isEmpty()) {
+            logger.warn("Resource {} has not spec.", resource.getMetadata().getName());
+            return;
+        }
 
         KnxPropertyAddress address = spec.get().getAddress();
 

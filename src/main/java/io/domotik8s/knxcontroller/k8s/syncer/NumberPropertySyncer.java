@@ -30,6 +30,7 @@ import tuwien.auto.calimero.dptxlator.TranslatorTypes;
 
 import javax.annotation.PostConstruct;
 import java.util.HashSet;
+import java.util.List;
 import java.util.Optional;
 import java.util.Set;
 
@@ -139,33 +140,61 @@ public class NumberPropertySyncer implements ResourceEventHandler<KnxNumberPrope
 
         // Convert the received value
         DPTXlator xlator = null;
-        Integer value = null;
+        Double dblValue = null;
         try {
             xlator = TranslatorTypes.createTranslator(dpt, asdu);
-            value = Double.valueOf(xlator.getNumericValue()).intValue();
+            dblValue = xlator.getNumericValue();
         } catch (KNXException e) {
             throw new RuntimeException(e);
         }
 
+        Number value = dblValue;
+
+        String dptId = dpt.getID();
+        String[] dptIdTokens = dptId.split("\\.");
+        Integer dptFirst = Integer.parseInt(dptIdTokens[0]);
+        if (
+                (dptFirst >= 2 && dptFirst <= 8) ||
+                (dptFirst >= 10 && dptFirst <= 13) ||
+                (dptFirst >= 20 && dptFirst <= 211) ||
+                dptFirst == 214 || dptFirst == 217 || dptFirst == 220 || dptFirst == 223 || dptFirst == 225 ||
+                (dptFirst >= 231 && dptFirst <= 234) ||
+                (dptFirst >= 236 && dptFirst <= 241)
+        ) {
+            value = dblValue.longValue();
+        }
+
         // Update the resource's desired state
-        PropertySpec<KnxPropertyAddress, NumberPropertyState> spec = Optional.ofNullable(property.getSpec()).orElse(new NumberPropertySpec());
-        property.setSpec(spec);
+        if (config.get().getWrite() != null) {
+            logger.debug("Resource {} as a write address, which means we can have a desired state.", property.getMetadata().getName());
+            PropertySpec<KnxPropertyAddress, NumberPropertyState> spec = Optional.ofNullable(property.getSpec()).orElse(new NumberPropertySpec());
+            property.setSpec(spec);
 
-        NumberPropertyState dState = Optional.ofNullable(spec.getState()).orElse(new NumberPropertyState());
-        dState.setValue(value);
-        spec.setState(dState);
+            NumberPropertyState dState = Optional.ofNullable(spec.getState()).orElse(new NumberPropertyState());
+            dState.setValue(value);
+            spec.setState(dState);
 
-        client.update(property);
+            client.update(property);
+        } else if(property.getSpec().getState() != null) {
+            logger.debug("Resource {} as NO write address but a desired state is set. Deleting..", property.getMetadata().getName());
+            property.getSpec().setState(null);
+            client.update(property);
+        }
 
         // Update the resource's current state
-        PropertyStatus<NumberPropertyState> status = Optional.ofNullable(property.getStatus()).orElse(new PropertyStatus<>());
-        property.setStatus(status);
+        if (config.get().getRead() != null) {
+            PropertyStatus<NumberPropertyState> status = Optional.ofNullable(property.getStatus()).orElse(new PropertyStatus<>());
+            property.setStatus(status);
 
-        NumberPropertyState state = Optional.ofNullable(status.getState()).orElse(new NumberPropertyState());
-        state.setValue(value);
-        status.setState(state);
+            NumberPropertyState state = Optional.ofNullable(status.getState()).orElse(new NumberPropertyState());
+            state.setValue(value);
+            status.setState(state);
 
-        client.updateStatus(property, (l) -> l.getStatus());
+            client.updateStatus(property, (l) -> l.getStatus());
+        } else if(property.getStatus().getState() != null) {
+            property.getStatus().setState(null);
+            client.updateStatus(property, (l) -> l.getStatus());
+        }
     }
 
     /**
