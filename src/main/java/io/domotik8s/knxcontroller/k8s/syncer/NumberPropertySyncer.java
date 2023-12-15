@@ -23,6 +23,7 @@ import org.springframework.stereotype.Component;
 import tuwien.auto.calimero.GroupAddress;
 import tuwien.auto.calimero.IndividualAddress;
 import tuwien.auto.calimero.KNXException;
+import tuwien.auto.calimero.KNXFormatException;
 import tuwien.auto.calimero.dptxlator.DPT;
 import tuwien.auto.calimero.dptxlator.DPTXlator;
 import tuwien.auto.calimero.dptxlator.DPTXlatorBoolean;
@@ -148,21 +149,6 @@ public class NumberPropertySyncer implements ResourceEventHandler<KnxNumberPrope
             throw new RuntimeException(e);
         }
 
-        Number value = dblValue;
-
-        String dptId = dpt.getID();
-        String[] dptIdTokens = dptId.split("\\.");
-        Integer dptFirst = Integer.parseInt(dptIdTokens[0]);
-        if (
-                (dptFirst >= 2 && dptFirst <= 8) ||
-                (dptFirst >= 10 && dptFirst <= 13) ||
-                (dptFirst >= 20 && dptFirst <= 211) ||
-                dptFirst == 214 || dptFirst == 217 || dptFirst == 220 || dptFirst == 223 || dptFirst == 225 ||
-                (dptFirst >= 231 && dptFirst <= 234) ||
-                (dptFirst >= 236 && dptFirst <= 241)
-        ) {
-            value = dblValue.longValue();
-        }
 
         // Update the resource's desired state
         if (config.get().getWrite() != null) {
@@ -171,7 +157,11 @@ public class NumberPropertySyncer implements ResourceEventHandler<KnxNumberPrope
             property.setSpec(spec);
 
             NumberPropertyState dState = Optional.ofNullable(spec.getState()).orElse(new NumberPropertyState());
-            dState.setValue(value);
+            try {
+                dState.setValue(xlator, dpt);
+            } catch (KNXFormatException e) {
+                throw new RuntimeException(e);
+            }
             spec.setState(dState);
 
             client.update(property);
@@ -187,7 +177,11 @@ public class NumberPropertySyncer implements ResourceEventHandler<KnxNumberPrope
             property.setStatus(status);
 
             NumberPropertyState state = Optional.ofNullable(status.getState()).orElse(new NumberPropertyState());
-            state.setValue(value);
+            try {
+                state.setValue(xlator, dpt);
+            } catch (KNXFormatException e) {
+                throw new RuntimeException(e);
+            }
             status.setState(state);
 
             client.updateStatus(property, (l) -> l.getStatus());
