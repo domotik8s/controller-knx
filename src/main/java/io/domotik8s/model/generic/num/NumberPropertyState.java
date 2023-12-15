@@ -6,7 +6,7 @@ import lombok.experimental.SuperBuilder;
 
 @Data
 @SuperBuilder
-public class NumberPropertyState extends PropertyState<Number> {
+public class NumberPropertyState extends PropertyState<Integer> {
 
     public NumberPropertyState() {
 

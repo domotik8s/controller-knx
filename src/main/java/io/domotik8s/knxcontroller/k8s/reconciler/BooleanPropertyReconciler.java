@@ -16,6 +16,7 @@ import io.kubernetes.client.extended.controller.reconciler.Request;
 import io.kubernetes.client.extended.controller.reconciler.Result;
 import io.kubernetes.client.informer.SharedIndexInformer;
 import io.kubernetes.client.util.generic.GenericKubernetesApi;
+import lombok.RequiredArgsConstructor;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -32,20 +33,18 @@ import java.util.Optional;
 import java.util.Set;
 
 @Component
+@RequiredArgsConstructor(onConstructor = @__(@Autowired))
 public class BooleanPropertyReconciler implements Reconciler {
 
     private Logger logger = LoggerFactory.getLogger(BooleanPropertyReconciler.class);
 
-    @Autowired
     @Qualifier("booleanPropertyClient")
-    private GenericKubernetesApi<KnxBooleanProperty, KnxBooleanPropertyList> client;
+    private final GenericKubernetesApi<KnxBooleanProperty, KnxBooleanPropertyList> client;
 
-    @Autowired
     @Qualifier("booleanPropertyInformer")
-    private SharedIndexInformer<KnxBooleanProperty> informer;
+    private final SharedIndexInformer<KnxBooleanProperty> informer;
 
-    @Autowired
-    private KnxClient knxClient;
+    private final KnxClient knxClient;
 
     private final StringToGroupAddressConverter gaConverter = new StringToGroupAddressConverter();
 

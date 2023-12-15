@@ -15,6 +15,7 @@ import io.kubernetes.client.informer.ResourceEventHandler;
 import io.kubernetes.client.informer.SharedIndexInformer;
 import io.kubernetes.client.util.generic.GenericKubernetesApi;
 import io.kubernetes.client.util.generic.KubernetesApiResponse;
+import lombok.RequiredArgsConstructor;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -33,19 +34,17 @@ import java.util.Optional;
 import java.util.Set;
 
 @Component
+@RequiredArgsConstructor(onConstructor = @__(@Autowired))
 public class NumberPropertySyncer implements ResourceEventHandler<KnxNumberProperty>, GroupAddressListener {
 
     private Logger logger = LoggerFactory.getLogger(NumberPropertySyncer.class);
 
 
-    @Autowired
-    private KnxClient knxClient;
+    private final KnxClient knxClient;
 
-    @Autowired
-    private GenericKubernetesApi<KnxNumberProperty, KnxNumberPropertyList> client;
+    private final GenericKubernetesApi<KnxNumberProperty, KnxNumberPropertyList> client;
 
-    @Autowired
-    private SharedIndexInformer<KnxNumberProperty> informer;
+    private final SharedIndexInformer<KnxNumberProperty> informer;
 
 
     private final Set<GroupAddress> subscriptions = new HashSet<>();
@@ -140,10 +139,10 @@ public class NumberPropertySyncer implements ResourceEventHandler<KnxNumberPrope
 
         // Convert the received value
         DPTXlator xlator = null;
-        Number value = null;
+        Integer value = null;
         try {
             xlator = TranslatorTypes.createTranslator(dpt, asdu);
-            value = xlator.getNumericValue();
+            value = Double.valueOf(xlator.getNumericValue()).intValue();
         } catch (KNXException e) {
             throw new RuntimeException(e);
         }

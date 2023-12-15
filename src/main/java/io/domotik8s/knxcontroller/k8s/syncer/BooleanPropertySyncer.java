@@ -15,6 +15,7 @@ import io.kubernetes.client.informer.ResourceEventHandler;
 import io.kubernetes.client.informer.SharedIndexInformer;
 import io.kubernetes.client.util.generic.GenericKubernetesApi;
 import io.kubernetes.client.util.generic.KubernetesApiResponse;
+import lombok.RequiredArgsConstructor;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -33,19 +34,17 @@ import java.util.Optional;
 import java.util.Set;
 
 @Component
+@RequiredArgsConstructor(onConstructor = @__(@Autowired))
 public class BooleanPropertySyncer implements ResourceEventHandler<KnxBooleanProperty>, GroupAddressListener {
 
     private Logger logger = LoggerFactory.getLogger(BooleanPropertySyncer.class);
 
 
-    @Autowired
-    private KnxClient knxClient;
+    private final KnxClient knxClient;
 
-    @Autowired
-    private GenericKubernetesApi<KnxBooleanProperty, KnxBooleanPropertyList> client;
+    private final GenericKubernetesApi<KnxBooleanProperty, KnxBooleanPropertyList> client;
 
-    @Autowired
-    private SharedIndexInformer<KnxBooleanProperty> informer;
+    private final SharedIndexInformer<KnxBooleanProperty> informer;
 
 
     private final Set<GroupAddress> subscriptions = new HashSet<>();

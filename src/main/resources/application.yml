@@ -1,9 +1,8 @@
 logging:
   level:
     root: INFO
-    "[io.kubernetes]": INFO
-    "[org.springframework]": INFO
-    "[org.reflections]": ERROR
+    "[io.kubernetes]": DEBUG
+    "[org.springframework]": DEBUG
     "[io.domotik8s]": DEBUG
 
 management:

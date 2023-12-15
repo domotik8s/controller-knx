@@ -36,7 +36,7 @@ spec:
                   type: object
                   properties:
                     value:
-                      type: number
+                      type: integer
 
                 # ACCESS
                 access: 
@@ -57,7 +57,7 @@ spec:
                   type: object
                   properties:
                     value:
-                      type: number
+                      type: integer
 
                 # LASTUPDATED
                 lastUpdated:
