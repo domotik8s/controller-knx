@@ -1,4 +1,4 @@
-package io.domotik8s.knxcontroller.k8s.syncer;
+package io.domotik8s.knxcontroller.k8s.numberproperty;
 
 import io.domotik8s.knxcontroller.knx.client.GroupAddressListener;
 import io.domotik8s.knxcontroller.knx.client.KnxClient;
@@ -6,8 +6,6 @@ import io.domotik8s.knxcontroller.knx.convert.StringToDptConverter;
 import io.domotik8s.knxcontroller.knx.convert.StringToGroupAddressConverter;
 import io.domotik8s.model.generic.PropertySpec;
 import io.domotik8s.model.generic.PropertyStatus;
-import io.domotik8s.model.generic.bool.BooleanPropertySpec;
-import io.domotik8s.model.generic.bool.BooleanPropertyState;
 import io.domotik8s.model.generic.num.NumberPropertySpec;
 import io.domotik8s.model.generic.num.NumberPropertyState;
 import io.domotik8s.model.knx.*;
@@ -26,12 +24,10 @@ import tuwien.auto.calimero.KNXException;
 import tuwien.auto.calimero.KNXFormatException;
 import tuwien.auto.calimero.dptxlator.DPT;
 import tuwien.auto.calimero.dptxlator.DPTXlator;
-import tuwien.auto.calimero.dptxlator.DPTXlatorBoolean;
 import tuwien.auto.calimero.dptxlator.TranslatorTypes;
 
 import javax.annotation.PostConstruct;
 import java.util.HashSet;
-import java.util.List;
 import java.util.Optional;
 import java.util.Set;
 

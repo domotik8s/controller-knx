@@ -1,4 +1,4 @@
-package io.domotik8s.knxcontroller.k8s.syncer;
+package io.domotik8s.knxcontroller.k8s.booleanproperty;
 
 import io.domotik8s.knxcontroller.knx.client.GroupAddressListener;
 import io.domotik8s.knxcontroller.knx.client.KnxClient;

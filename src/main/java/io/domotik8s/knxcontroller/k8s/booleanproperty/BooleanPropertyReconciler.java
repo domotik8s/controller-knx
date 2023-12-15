@@ -1,4 +1,4 @@
-package io.domotik8s.knxcontroller.k8s.reconciler;
+package io.domotik8s.knxcontroller.k8s.booleanproperty;
 
 import io.domotik8s.knxcontroller.knx.client.KnxClient;
 import io.domotik8s.knxcontroller.knx.convert.StringToDptConverter;
@@ -6,9 +6,9 @@ import io.domotik8s.knxcontroller.knx.convert.StringToGroupAddressConverter;
 import io.domotik8s.model.generic.PropertyAccess;
 import io.domotik8s.model.generic.PropertySpec;
 import io.domotik8s.model.generic.PropertyStatus;
-import io.domotik8s.model.generic.num.NumberPropertyState;
-import io.domotik8s.model.knx.KnxNumberProperty;
-import io.domotik8s.model.knx.KnxNumberPropertyList;
+import io.domotik8s.model.generic.bool.BooleanPropertyState;
+import io.domotik8s.model.knx.KnxBooleanProperty;
+import io.domotik8s.model.knx.KnxBooleanPropertyList;
 import io.domotik8s.model.knx.KnxPropertyAddress;
 import io.kubernetes.client.extended.controller.reconciler.Reconciler;
 import io.kubernetes.client.extended.controller.reconciler.Request;
@@ -24,7 +24,7 @@ import org.springframework.stereotype.Component;
 import tuwien.auto.calimero.GroupAddress;
 import tuwien.auto.calimero.KNXException;
 import tuwien.auto.calimero.dptxlator.DPT;
-import tuwien.auto.calimero.dptxlator.DPTXlator;
+import tuwien.auto.calimero.dptxlator.DPTXlatorBoolean;
 import tuwien.auto.calimero.dptxlator.TranslatorTypes;
 
 import java.util.HashSet;
@@ -33,15 +33,15 @@ import java.util.Set;
 
 @Component
 @RequiredArgsConstructor(onConstructor = @__(@Autowired))
-public class NumberPropertyReconciler implements Reconciler {
+public class BooleanPropertyReconciler implements Reconciler {
 
-    private Logger logger = LoggerFactory.getLogger(NumberPropertyReconciler.class);
+    private Logger logger = LoggerFactory.getLogger(BooleanPropertyReconciler.class);
 
-    @Qualifier("numberPropertyClient")
-    private final GenericKubernetesApi<KnxNumberProperty, KnxNumberPropertyList> client;
+    @Qualifier("booleanPropertyClient")
+    private final GenericKubernetesApi<KnxBooleanProperty, KnxBooleanPropertyList> client;
 
-    @Qualifier("numberPropertyInformer")
-    private final SharedIndexInformer<KnxNumberProperty> informer;
+    @Qualifier("booleanPropertyInformer")
+    private final SharedIndexInformer<KnxBooleanProperty> informer;
 
     private final KnxClient knxClient;
 
@@ -53,27 +53,22 @@ public class NumberPropertyReconciler implements Reconciler {
     @Override
     public Result reconcile(Request request) {
         String key = createKey(request);
-        logger.warn("Handling resource {}", key);
+        logger.trace("Handling resource {}", key);
 
-        KnxNumberProperty resource = informer.getIndexer().getByKey(key);
-
-        if (resource == null) {
-            logger.warn("Received reconciliation request for resource {} but could not find it in indexer.", key);
-            return new Result(false);
-        }
+        KnxBooleanProperty resource = informer.getIndexer().getByKey(key);
 
         updateAccess(resource);
 
         // Get desired and current state
-        Optional<Number> desiredOpt = Optional.ofNullable(resource)
-                .map(KnxNumberProperty::getSpec)
+        Optional<Boolean> desiredOpt = Optional.ofNullable(resource)
+                .map(KnxBooleanProperty::getSpec)
                 .map(PropertySpec::getState)
-                .map(NumberPropertyState::getValue);
+                .map(BooleanPropertyState::getValue);
 
-        Optional<Number> currentOpt = Optional.ofNullable(resource)
-                .map(KnxNumberProperty::getStatus)
+        Optional<Boolean> currentOpt = Optional.ofNullable(resource)
+                .map(KnxBooleanProperty::getStatus)
                 .map(PropertyStatus::getState)
-                .map(NumberPropertyState::getValue);
+                .map(BooleanPropertyState::getValue);
 
         logger.debug("Resource {} has current state {} and desired state {}", resource.getMetadata().getName(), currentOpt.orElse(null), desiredOpt.orElse(null));
 
@@ -91,13 +86,8 @@ public class NumberPropertyReconciler implements Reconciler {
         return new Result(false);
     }
 
-    private void updateAccess(KnxNumberProperty resource) {
-        Optional<PropertySpec<KnxPropertyAddress, NumberPropertyState>> spec = Optional.ofNullable(resource).map(KnxNumberProperty::getSpec);
-
-        if (spec.isEmpty()) {
-            logger.warn("Resource {} has not spec.", resource.getMetadata().getName());
-            return;
-        }
+    private void updateAccess(KnxBooleanProperty resource) {
+        Optional<PropertySpec<KnxPropertyAddress, BooleanPropertyState>> spec = Optional.ofNullable(resource).map(KnxBooleanProperty::getSpec);
 
         KnxPropertyAddress address = spec.get().getAddress();
 
@@ -105,6 +95,7 @@ public class NumberPropertyReconciler implements Reconciler {
 
         Set<PropertyAccess> access = Optional.ofNullable(spec.get().getAccess()).orElse(new HashSet<>());
         spec.get().setAccess(access);
+
 
         access.clear();
         if (address.getDpt() != null) {
@@ -120,7 +111,7 @@ public class NumberPropertyReconciler implements Reconciler {
     }
 
 
-    private void requestStateUpdate(KnxNumberProperty resource){
+    private void requestStateUpdate(KnxBooleanProperty resource){
             Optional<KnxPropertyAddress> address = extractPropertyAddress(resource);
 
             if (address.isEmpty()) {
@@ -143,11 +134,11 @@ public class NumberPropertyReconciler implements Reconciler {
             }
     }
 
-    private void updateSystemState(KnxNumberProperty resource) {
-        Optional<Number> desiredOpt = Optional.ofNullable(resource)
-                .map(KnxNumberProperty::getSpec)
+    private void updateSystemState(KnxBooleanProperty resource) {
+        Optional<Boolean> desiredOpt = Optional.ofNullable(resource)
+                .map(KnxBooleanProperty::getSpec)
                 .map(PropertySpec::getState)
-                .map(NumberPropertyState::getValue);
+                .map(BooleanPropertyState::getValue);
 
         if (desiredOpt.isEmpty()) {
             logger.warn("No desired state set for resource {}.", resource.getMetadata().getName());
@@ -166,22 +157,21 @@ public class NumberPropertyReconciler implements Reconciler {
         GroupAddress ga = gaConverter.convert(gaOpt.get());
         DPT dpt = dptConverter.convert(dptOpt.get());
 
-        // TODO
-        DPTXlator xlator = null;
+        DPTXlatorBoolean xlator = null;
         try {
-            xlator = TranslatorTypes.createTranslator(0, dpt.getID());
-            xlator.setValue(desiredOpt.get().toString());
+            xlator = (DPTXlatorBoolean) TranslatorTypes.createTranslator(0, dpt.getID());
         } catch (KNXException e) {
             throw new RuntimeException(e);
         }
+        xlator.setValue(desiredOpt.get());
 
         logger.debug("Sending to GA {}: {}", ga, desiredOpt.get());
         knxClient.write(ga, xlator);
     }
 
-    private Optional<KnxPropertyAddress> extractPropertyAddress(KnxNumberProperty resource) {
+    private Optional<KnxPropertyAddress> extractPropertyAddress(KnxBooleanProperty resource) {
         return Optional.ofNullable(resource)
-                .map(KnxNumberProperty::getSpec)
+                .map(KnxBooleanProperty::getSpec)
                 .map(PropertySpec::getAddress);
     }
 
