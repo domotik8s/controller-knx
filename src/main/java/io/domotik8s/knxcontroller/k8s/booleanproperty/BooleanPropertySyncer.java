@@ -1,15 +1,14 @@
 package io.domotik8s.knxcontroller.k8s.booleanproperty;
 
-import io.domotik8s.knxcontroller.k8s.model.KnxBooleanPropertyList;
-import io.domotik8s.knxcontroller.k8s.model.KnxBooleanPropertySpec;
-import io.domotik8s.knxcontroller.k8s.model.KnxPropertyAddress;
+import io.domotik8s.knxcontroller.k8s.model.*;
 import io.domotik8s.knxcontroller.knx.client.GroupAddressListener;
 import io.domotik8s.knxcontroller.knx.client.KnxClient;
 import io.domotik8s.knxcontroller.knx.convert.StringToDptConverter;
 import io.domotik8s.knxcontroller.knx.convert.StringToGroupAddressConverter;
-import io.domotik8s.knxcontroller.k8s.model.KnxBooleanProperty;
 import io.domotik8s.model.bool.BooleanPropertyState;
 import io.domotik8s.model.bool.BooleanPropertyStatus;
+import io.domotik8s.model.num.NumberPropertyState;
+import io.domotik8s.model.num.NumberPropertyStatus;
 import io.kubernetes.client.informer.ResourceEventHandler;
 import io.kubernetes.client.informer.SharedIndexInformer;
 import io.kubernetes.client.util.generic.GenericKubernetesApi;
@@ -21,6 +20,7 @@ import org.springframework.stereotype.Component;
 import tuwien.auto.calimero.GroupAddress;
 import tuwien.auto.calimero.IndividualAddress;
 import tuwien.auto.calimero.KNXException;
+import tuwien.auto.calimero.KNXFormatException;
 import tuwien.auto.calimero.dptxlator.DPT;
 import tuwien.auto.calimero.dptxlator.DPTXlator;
 import tuwien.auto.calimero.dptxlator.DPTXlatorBoolean;
@@ -138,28 +138,42 @@ public class BooleanPropertySyncer implements ResourceEventHandler<KnxBooleanPro
         DPTXlatorBoolean boolXlator = (DPTXlatorBoolean) xlator;
         Boolean value = boolXlator.getValueBoolean();
 
-
         // Update the resource's desired state
-        KnxBooleanPropertySpec spec = Optional.ofNullable(property.getSpec()).orElse(new KnxBooleanPropertySpec());
-        property.setSpec(spec);
+        if (config.get().getWrite() != null) {
+            logger.debug("Resource {} as a write address, which means we can have a desired state.", property.getMetadata().getName());
+            KnxBooleanPropertySpec spec = Optional.ofNullable(property.getSpec()).orElse(new KnxBooleanPropertySpec());
+            property.setSpec(spec);
 
-        if (!Boolean.TRUE.equals(spec.getLocked())) {
-            BooleanPropertyState dState = Optional.ofNullable(spec.getState()).orElse(new BooleanPropertyState());
-            dState.setValue(value);
-            spec.setState(dState);
+            if (!Boolean.TRUE.equals(spec.getLocked())) {
+                BooleanPropertyState dState = Optional.ofNullable(spec.getState()).orElse(new BooleanPropertyState());
+                spec.setState(dState);
 
+                dState.setValue(value);
+
+                client.update(property);
+            }
+        } else if(property.getSpec().getState() != null) {
+            logger.debug("Resource {} as NO write address but a desired state is set. Deleting..", property.getMetadata().getName());
+            property.getSpec().setState(null);
             client.update(property);
         }
 
         // Update the resource's current state
-        BooleanPropertyStatus status = Optional.ofNullable(property.getStatus()).orElse(new BooleanPropertyStatus());
-        property.setStatus(status);
+        if (config.get().getRead() != null) {
+            BooleanPropertyStatus status = Optional.ofNullable(property.getStatus()).orElse(new BooleanPropertyStatus());
+            property.setStatus(status);
 
-        BooleanPropertyState state = Optional.ofNullable(status.getState()).orElse(new BooleanPropertyState());
-        state.setValue(value);
-        status.setState(state);
+            BooleanPropertyState state = Optional.ofNullable(status.getState()).orElse(new BooleanPropertyState());
+            status.setState(state);
 
-        client.updateStatus(property, (l) -> l.getStatus());
+            state.setValue(value);
+
+            client.updateStatus(property, (l) -> l.getStatus());
+        } else if(property.getStatus().getState() != null) {
+            property.getStatus().setState(null);
+            client.updateStatus(property, (l) -> l.getStatus());
+        }
+
     }
 
     private void subscribe(KnxBooleanProperty property) {
