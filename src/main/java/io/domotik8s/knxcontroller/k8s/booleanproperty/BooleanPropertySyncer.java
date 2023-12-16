@@ -143,11 +143,13 @@ public class BooleanPropertySyncer implements ResourceEventHandler<KnxBooleanPro
         KnxBooleanPropertySpec spec = Optional.ofNullable(property.getSpec()).orElse(new KnxBooleanPropertySpec());
         property.setSpec(spec);
 
-        BooleanPropertyState dState = Optional.ofNullable(spec.getState()).orElse(new BooleanPropertyState());
-        dState.setValue(value);
-        spec.setState(dState);
+        if (!Boolean.TRUE.equals(spec.getLocked())) {
+            BooleanPropertyState dState = Optional.ofNullable(spec.getState()).orElse(new BooleanPropertyState());
+            dState.setValue(value);
+            spec.setState(dState);
 
-        client.update(property);
+            client.update(property);
+        }
 
         // Update the resource's current state
         BooleanPropertyStatus status = Optional.ofNullable(property.getStatus()).orElse(new BooleanPropertyStatus());

@@ -155,15 +155,17 @@ public class NumberPropertySyncer implements ResourceEventHandler<KnxNumberPrope
             KnxNumberPropertySpec spec = Optional.ofNullable(property.getSpec()).orElse(new KnxNumberPropertySpec());
             property.setSpec(spec);
 
-            NumberPropertyState dState = Optional.ofNullable(spec.getState()).orElse(new NumberPropertyState());
-            try {
-                dState.setValue(toNumber(xlator, dpt));
-            } catch (KNXFormatException e) {
-                throw new RuntimeException(e);
-            }
-            spec.setState(dState);
+            if (!Boolean.TRUE.equals(spec.getLocked())) {
+                NumberPropertyState dState = Optional.ofNullable(spec.getState()).orElse(new NumberPropertyState());
+                try {
+                    dState.setValue(toNumber(xlator, dpt));
+                } catch (KNXFormatException e) {
+                    throw new RuntimeException(e);
+                }
+                spec.setState(dState);
 
-            client.update(property);
+                client.update(property);
+            }
         } else if(property.getSpec().getState() != null) {
             logger.debug("Resource {} as NO write address but a desired state is set. Deleting..", property.getMetadata().getName());
             property.getSpec().setState(null);
