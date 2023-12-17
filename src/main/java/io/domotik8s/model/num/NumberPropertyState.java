@@ -16,6 +16,6 @@ public class NumberPropertyState implements PropertyState<Number> {
 
     private Number value;
 
-    private Unit unit;
+    private String unit;
 
 }

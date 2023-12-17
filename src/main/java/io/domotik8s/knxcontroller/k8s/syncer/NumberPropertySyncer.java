@@ -8,6 +8,7 @@ import io.domotik8s.knxcontroller.knx.client.GroupAddressListener;
 import io.domotik8s.knxcontroller.knx.client.KnxClient;
 import io.domotik8s.knxcontroller.knx.convert.StringToDptConverter;
 import io.domotik8s.knxcontroller.knx.convert.StringToGroupAddressConverter;
+import io.domotik8s.knxcontroller.knx.utils.DptUnitConverter;
 import io.domotik8s.model.PropertyList;
 import io.domotik8s.model.num.NumberPropertySpec;
 import io.domotik8s.model.num.NumberPropertyState;
@@ -30,6 +31,7 @@ import tuwien.auto.calimero.dptxlator.DPTXlator;
 import tuwien.auto.calimero.dptxlator.TranslatorTypes;
 
 import javax.annotation.PostConstruct;
+import javax.measure.Unit;
 import java.util.HashSet;
 import java.util.Optional;
 import java.util.Set;
@@ -157,6 +159,7 @@ public class NumberPropertySyncer implements ResourceEventHandler<KnxNumberPrope
 
             if (!Boolean.TRUE.equals(spec.getLocked())) {
                 NumberPropertyState dState = Optional.ofNullable(spec.getState()).orElse(new NumberPropertyState());
+                dState.setUnit(Optional.ofNullable(DptUnitConverter.toUnit(dpt)).map(Unit::toString).orElse(null));
                 try {
                     dState.setValue(toNumber(xlator, dpt));
                 } catch (KNXFormatException e) {
@@ -178,6 +181,7 @@ public class NumberPropertySyncer implements ResourceEventHandler<KnxNumberPrope
             property.setStatus(status);
 
             NumberPropertyState state = Optional.ofNullable(status.getState()).orElse(new NumberPropertyState());
+            state.setUnit(Optional.ofNullable(DptUnitConverter.toUnit(dpt)).map(Unit::toString).orElse(null));
             try {
                 state.setValue(toNumber(xlator, dpt));
             } catch (KNXFormatException e) {

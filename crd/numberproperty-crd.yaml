@@ -37,6 +37,8 @@ spec:
                   properties:
                     value:
                       type: number
+                    unit:
+                      type: string
 
                 # ACCESS
                 access: 
@@ -62,6 +64,8 @@ spec:
                   properties:
                     value:
                       type: number
+                    unit:
+                      type: string
 
                 # LASTUPDATED
                 lastUpdated:

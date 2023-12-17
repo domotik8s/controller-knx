@@ -17,7 +17,7 @@ public class DptUnitConverter {
             DPTXlator2ByteFloat.DPT_INTENSITY_OF_LIGHT, Units.LUX
     );
 
-    public Unit toUnit(DPT dpt) {
+    public static Unit toUnit(DPT dpt) {
         return dpt2UnitMap.get(dpt);
     }
 

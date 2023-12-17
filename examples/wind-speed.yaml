@@ -1,0 +1,12 @@
+apiVersion: domotik8s.io/v1beta1
+kind: NumberProperty
+metadata:
+  name: wind-speed
+  labels:
+    area: "Outdoor"
+    name: "WindSpeed"
+spec:
+  address:
+    system: "knx"
+    read: "10/1/1"
+    dpt: "9.005"
