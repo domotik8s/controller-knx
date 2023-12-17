@@ -1,8 +1,8 @@
-package io.domotik8s.knxcontroller.k8s.numberproperty;
+package io.domotik8s.knxcontroller.k8s.config;
 
-import io.domotik8s.knxcontroller.k8s.config.SystemInstanceFilter;
 import io.domotik8s.knxcontroller.k8s.model.KnxNumberProperty;
 import io.domotik8s.knxcontroller.k8s.model.KnxNumberPropertyList;
+import io.domotik8s.knxcontroller.k8s.reconciler.NumberPropertyReconciler;
 import io.kubernetes.client.extended.controller.Controller;
 import io.kubernetes.client.extended.controller.builder.ControllerBuilder;
 import io.kubernetes.client.informer.SharedIndexInformer;

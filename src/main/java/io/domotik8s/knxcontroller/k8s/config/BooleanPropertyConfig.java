@@ -1,6 +1,6 @@
-package io.domotik8s.knxcontroller.k8s.booleanproperty;
+package io.domotik8s.knxcontroller.k8s.config;
 
-import io.domotik8s.knxcontroller.k8s.config.SystemInstanceFilter;
+import io.domotik8s.knxcontroller.k8s.reconciler.BooleanPropertyReconciler;
 import io.domotik8s.knxcontroller.k8s.model.KnxBooleanProperty;
 import io.domotik8s.knxcontroller.k8s.model.KnxBooleanPropertyList;
 import io.kubernetes.client.extended.controller.Controller;

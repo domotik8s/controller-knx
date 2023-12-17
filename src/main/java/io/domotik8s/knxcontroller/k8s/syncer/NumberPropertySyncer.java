@@ -1,17 +1,21 @@
-package io.domotik8s.knxcontroller.k8s.booleanproperty;
+package io.domotik8s.knxcontroller.k8s.syncer;
 
-import io.domotik8s.knxcontroller.k8s.model.*;
+import io.domotik8s.knxcontroller.k8s.model.KnxNumberProperty;
+import io.domotik8s.knxcontroller.k8s.model.KnxNumberPropertyList;
+import io.domotik8s.knxcontroller.k8s.model.KnxNumberPropertySpec;
+import io.domotik8s.knxcontroller.k8s.model.KnxPropertyAddress;
 import io.domotik8s.knxcontroller.knx.client.GroupAddressListener;
 import io.domotik8s.knxcontroller.knx.client.KnxClient;
 import io.domotik8s.knxcontroller.knx.convert.StringToDptConverter;
 import io.domotik8s.knxcontroller.knx.convert.StringToGroupAddressConverter;
-import io.domotik8s.model.bool.BooleanPropertyState;
-import io.domotik8s.model.bool.BooleanPropertyStatus;
+import io.domotik8s.model.PropertyList;
+import io.domotik8s.model.num.NumberPropertySpec;
 import io.domotik8s.model.num.NumberPropertyState;
 import io.domotik8s.model.num.NumberPropertyStatus;
 import io.kubernetes.client.informer.ResourceEventHandler;
 import io.kubernetes.client.informer.SharedIndexInformer;
 import io.kubernetes.client.util.generic.GenericKubernetesApi;
+import io.kubernetes.client.util.generic.KubernetesApiResponse;
 import lombok.RequiredArgsConstructor;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -23,7 +27,6 @@ import tuwien.auto.calimero.KNXException;
 import tuwien.auto.calimero.KNXFormatException;
 import tuwien.auto.calimero.dptxlator.DPT;
 import tuwien.auto.calimero.dptxlator.DPTXlator;
-import tuwien.auto.calimero.dptxlator.DPTXlatorBoolean;
 import tuwien.auto.calimero.dptxlator.TranslatorTypes;
 
 import javax.annotation.PostConstruct;
@@ -33,16 +36,16 @@ import java.util.Set;
 
 @Component
 @RequiredArgsConstructor(onConstructor = @__(@Autowired))
-public class BooleanPropertySyncer implements ResourceEventHandler<KnxBooleanProperty>, GroupAddressListener {
+public class NumberPropertySyncer implements ResourceEventHandler<KnxNumberProperty>, GroupAddressListener {
 
-    private Logger logger = LoggerFactory.getLogger(BooleanPropertySyncer.class);
+    private Logger logger = LoggerFactory.getLogger(NumberPropertySyncer.class);
 
 
     private final KnxClient knxClient;
 
-    private final GenericKubernetesApi<KnxBooleanProperty, KnxBooleanPropertyList> client;
+    private final GenericKubernetesApi<KnxNumberProperty, KnxNumberPropertyList> client;
 
-    private final SharedIndexInformer<KnxBooleanProperty> informer;
+    private final SharedIndexInformer<KnxNumberProperty> informer;
 
 
     private final Set<GroupAddress> subscriptions = new HashSet<>();
@@ -83,17 +86,17 @@ public class BooleanPropertySyncer implements ResourceEventHandler<KnxBooleanPro
      */
 
     @Override
-    public void onAdd(KnxBooleanProperty property) {
+    public void onAdd(KnxNumberProperty property) {
         subscribe(property);
     }
 
     @Override
-    public void onUpdate(KnxBooleanProperty property, KnxBooleanProperty apiType1) {
+    public void onUpdate(KnxNumberProperty property, KnxNumberProperty apiType1) {
         subscribe(property);
     }
 
     @Override
-    public void onDelete(KnxBooleanProperty property, boolean b) {
+    public void onDelete(KnxNumberProperty property, boolean b) {
         unsubscribe(property);
     }
 
@@ -102,13 +105,20 @@ public class BooleanPropertySyncer implements ResourceEventHandler<KnxBooleanPro
      * Syncer Methods
      */
 
+    /**
+     * Takes group address and data incoming from KNX bus, finds the matching resource and updates
+     * the current AND desired state accordingly.
+     * @param destination The group address that reported a new value
+     * @param asdu The data carried by the KNX message
+     */
     private void updateCurrentState(GroupAddress destination, byte[] asdu) {
         // Get all available lights
-        KnxBooleanPropertyList list = client.list().getObject();
+        KubernetesApiResponse<KnxNumberPropertyList> listResp = client.list();
+        PropertyList<KnxNumberProperty> list = listResp.getObject();
 
         // Find the light that has destination as a read address and update that state property
-        Optional<KnxBooleanProperty> propertyOpt = list.getItems().stream().filter(property -> {
-            Optional<KnxPropertyAddress> config = Optional.ofNullable(property.getSpec()).map(KnxBooleanPropertySpec::getAddress);
+        Optional<KnxNumberProperty> propertyOpt = list.getItems().stream().filter(property -> {
+            Optional<KnxPropertyAddress> config = Optional.ofNullable(property.getSpec()).map(NumberPropertySpec::getAddress);
             if (config.isPresent()) {
                 Optional<String> gaStr = config.map(KnxPropertyAddress::getRead);
                 if (gaStr.isPresent()) {
@@ -121,8 +131,8 @@ public class BooleanPropertySyncer implements ResourceEventHandler<KnxBooleanPro
         if (propertyOpt.isEmpty()) return;
 
         // Extract the DPT for value conversion
-        KnxBooleanProperty property = propertyOpt.get();;
-        Optional<KnxPropertyAddress> config = Optional.ofNullable(property.getSpec()).map(KnxBooleanPropertySpec::getAddress);
+        KnxNumberProperty property = propertyOpt.get();;
+        Optional<KnxPropertyAddress> config = Optional.ofNullable(property.getSpec()).map(NumberPropertySpec::getAddress);
         Optional<String> dptStr = config.map(KnxPropertyAddress::getDpt);
         DPT dpt = dptConverter.convert(dptStr.get());
 
@@ -130,25 +140,29 @@ public class BooleanPropertySyncer implements ResourceEventHandler<KnxBooleanPro
 
         // Convert the received value
         DPTXlator xlator = null;
+        Double dblValue = null;
         try {
             xlator = TranslatorTypes.createTranslator(dpt, asdu);
+            dblValue = xlator.getNumericValue();
         } catch (KNXException e) {
             throw new RuntimeException(e);
         }
-        DPTXlatorBoolean boolXlator = (DPTXlatorBoolean) xlator;
-        Boolean value = boolXlator.getValueBoolean();
+
 
         // Update the resource's desired state
         if (config.get().getWrite() != null) {
             logger.debug("Resource {} as a write address, which means we can have a desired state.", property.getMetadata().getName());
-            KnxBooleanPropertySpec spec = Optional.ofNullable(property.getSpec()).orElse(new KnxBooleanPropertySpec());
+            KnxNumberPropertySpec spec = Optional.ofNullable(property.getSpec()).orElse(new KnxNumberPropertySpec());
             property.setSpec(spec);
 
             if (!Boolean.TRUE.equals(spec.getLocked())) {
-                BooleanPropertyState dState = Optional.ofNullable(spec.getState()).orElse(new BooleanPropertyState());
+                NumberPropertyState dState = Optional.ofNullable(spec.getState()).orElse(new NumberPropertyState());
+                try {
+                    dState.setValue(toNumber(xlator, dpt));
+                } catch (KNXFormatException e) {
+                    throw new RuntimeException(e);
+                }
                 spec.setState(dState);
-
-                dState.setValue(value);
 
                 client.update(property);
             }
@@ -160,25 +174,53 @@ public class BooleanPropertySyncer implements ResourceEventHandler<KnxBooleanPro
 
         // Update the resource's current state
         if (config.get().getRead() != null) {
-            BooleanPropertyStatus status = Optional.ofNullable(property.getStatus()).orElse(new BooleanPropertyStatus());
+            NumberPropertyStatus status = Optional.ofNullable(property.getStatus()).orElse(new NumberPropertyStatus());
             property.setStatus(status);
 
-            BooleanPropertyState state = Optional.ofNullable(status.getState()).orElse(new BooleanPropertyState());
+            NumberPropertyState state = Optional.ofNullable(status.getState()).orElse(new NumberPropertyState());
+            try {
+                state.setValue(toNumber(xlator, dpt));
+            } catch (KNXFormatException e) {
+                throw new RuntimeException(e);
+            }
             status.setState(state);
-
-            state.setValue(value);
 
             client.updateStatus(property, (l) -> l.getStatus());
         } else if(property.getStatus().getState() != null) {
             property.getStatus().setState(null);
             client.updateStatus(property, (l) -> l.getStatus());
         }
-
     }
 
-    private void subscribe(KnxBooleanProperty property) {
+    private Number toNumber(DPTXlator xlator, DPT dpt) throws KNXFormatException {
+        String dptId = dpt.getID();
+        String[] dptIdTokens = dptId.split("\\.");
+        Integer dptValue = Integer.parseInt(dptIdTokens[0]);
+
+        Number value = Double.valueOf(xlator.getNumericValue());
+        if ((dptValue >= 2 && dptValue <= 8) ||
+                (dptValue >= 10 && dptValue <= 13) ||
+                (dptValue >= 20 && dptValue <= 211) ||
+                dptValue == 214 || dptValue == 217 ||
+                dptValue == 220 ||
+                dptValue == 223 ||
+                dptValue == 225 ||
+                (dptValue >= 231 && dptValue <= 234) ||
+                (dptValue >= 236 && dptValue <= 241)
+        ) {
+            value = value.longValue();
+        }
+        return value;
+    }
+
+
+    /**
+     * Adds the given resource's read address to the list of subscribed group addresses
+     * @param property The property to start listening for changes
+     */
+    private void subscribe(KnxNumberProperty property) {
         Optional<KnxPropertyAddress> config = Optional.ofNullable(property.getSpec())
-                .map(KnxBooleanPropertySpec::getAddress);
+                .map(KnxNumberPropertySpec::getAddress);
         if (config.isPresent()) {
             config.map(KnxPropertyAddress::getRead).ifPresent((value) -> {
                 GroupAddress ga = gaConverter.convert(value);
@@ -188,9 +230,13 @@ public class BooleanPropertySyncer implements ResourceEventHandler<KnxBooleanPro
         }
     }
 
-    private void unsubscribe(KnxBooleanProperty property) {
+    /**
+     * Remove the given resource's read address to the list of subscribed group addresses
+     * @param property The property to stop listening for changes
+     */
+    private void unsubscribe(KnxNumberProperty property) {
         Optional<KnxPropertyAddress> config = Optional.ofNullable(property.getSpec())
-                .map(KnxBooleanPropertySpec::getAddress);
+                .map(KnxNumberPropertySpec::getAddress);
         if (config.isPresent()) {
             config.map(KnxPropertyAddress::getRead).ifPresent((value) -> {
                 GroupAddress ga = gaConverter.convert(value);
