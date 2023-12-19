@@ -38,6 +38,38 @@ spec:
                     value:
                       type: boolean
 
+                # SEMANTIC
+                semantic:
+                  type: object
+                  properties:
+                    meaning:
+                      type: string
+                      enum:
+                        - "OFF_ON"
+                        - "FALSE_TRUE"
+                        - "DISABLE_ENABLE"
+                        - "NORAMP_RAMP"
+                        - "NOALARM_ALARM"
+                        - "LOW_HIGH"
+                        - "DECREASE_INCREASE"
+                        - "UP_DOWN"
+                        - "OPEN_CLOSE"
+                        - "STOP_START"
+                        - "INACTIVE_ACTIVE"
+                        - "NOTINVERTED_INVERTED"
+                        - "STARSTOP_CYCLICALLY"
+                        - "FIXED_CALCULATED"
+                        - "DUMMY_TRIGGER"
+                        - "TRIGGER_TRIGGER"
+                        - "CLOSED_OPEN"
+                        - "OR_AND"
+                        - "SCENEA_SCENEB"
+                        - "UPDOWN_UPDOWNSTEPSTOP"
+                        - "COOLING_HEATING"
+                    reversed:
+                      type: boolean
+                      default: false
+
                 # ACCESS
                 access: 
                   type: array
