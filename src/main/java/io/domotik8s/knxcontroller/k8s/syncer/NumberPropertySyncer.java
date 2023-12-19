@@ -8,7 +8,7 @@ import io.domotik8s.knxcontroller.knx.client.GroupAddressListener;
 import io.domotik8s.knxcontroller.knx.client.KnxClient;
 import io.domotik8s.knxcontroller.knx.convert.StringToDptConverter;
 import io.domotik8s.knxcontroller.knx.convert.StringToGroupAddressConverter;
-import io.domotik8s.knxcontroller.knx.utils.DptUnitConverter;
+import io.domotik8s.knxcontroller.k8s.utils.DptUnitConverter;
 import io.domotik8s.model.PropertyList;
 import io.domotik8s.model.num.NumberPropertySpec;
 import io.domotik8s.model.num.NumberPropertyState;

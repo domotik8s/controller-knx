@@ -1,4 +1,4 @@
-package io.domotik8s.knxcontroller.knx.utils;
+package io.domotik8s.knxcontroller.k8s.utils;
 
 import tec.units.ri.unit.Units;
 import tuwien.auto.calimero.dptxlator.DPT;
