@@ -1,11 +1,12 @@
 package io.domotik8s.knxcontroller.k8s.syncer;
 
-import io.domotik8s.knxcontroller.k8s.utils.DptSemanticsConverter;
-import io.domotik8s.knxcontroller.k8s.model.*;
+import io.domotik8s.knxcontroller.k8s.model.KnxBooleanProperty;
+import io.domotik8s.knxcontroller.k8s.model.KnxBooleanPropertyList;
+import io.domotik8s.knxcontroller.k8s.model.KnxBooleanPropertySpec;
+import io.domotik8s.knxcontroller.k8s.model.KnxPropertyAddress;
 import io.domotik8s.knxcontroller.knx.client.KnxClient;
 import io.domotik8s.model.bool.BooleanPropertyState;
 import io.domotik8s.model.bool.BooleanPropertyStatus;
-import io.domotik8s.model.bool.BooleanSemantic;
 import io.kubernetes.client.informer.SharedIndexInformer;
 import io.kubernetes.client.util.generic.GenericKubernetesApi;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -82,11 +83,8 @@ public class BooleanPropertySyncer extends AbstractSyncer<KnxBooleanProperty> {
         DPTXlatorBoolean boolXlator = (DPTXlatorBoolean) xlator;
         Boolean value = boolXlator.getValueBoolean();
 
-
-        boolean semanticsUpdated = updateSemantics(property, dpt);
         boolean desiredStateUpdated = updateDesiredState(property, value);
-
-        if (semanticsUpdated || desiredStateUpdated)
+        if (desiredStateUpdated)
             client.update(property);
 
         // Update the resource's current state
@@ -128,20 +126,5 @@ public class BooleanPropertySyncer extends AbstractSyncer<KnxBooleanProperty> {
         }
         return false;
     }
-
-    private boolean updateSemantics(KnxBooleanProperty property, DPT dpt) {
-        Optional<KnxBooleanPropertySpec> specOpt = Optional.ofNullable(property).map(KnxBooleanProperty::getSpec);
-        if (specOpt.isPresent()) {
-            KnxBooleanPropertySpec spec = specOpt.get();
-            BooleanSemantic semantic = Optional.ofNullable(property.getSpec().getSemantic()).orElse(new BooleanSemantic());
-            spec.setSemantic(semantic);
-            if (semantic.getMeaning() == null) {
-                spec.setSemantic(DptSemanticsConverter.dptToSemantic(dpt));
-                return true;
-            }
-        }
-        return false;
-    }
-
 
 }

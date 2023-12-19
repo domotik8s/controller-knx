@@ -92,12 +92,12 @@ public abstract class AbstractSyncer<T extends Property<?, ?>> implements Resour
 
     @Override
     public void groupRead(IndividualAddress source, GroupAddress destination, byte[] asdu) {
-        updateCurrentState(destination, asdu);
+        // Ignore
     }
 
     @Override
     public void groupReadResponse(IndividualAddress source, GroupAddress destination, byte[] asdu) {
-        GroupAddressListener.super.groupReadResponse(source, destination, asdu);
+        updateCurrentState(destination, asdu);
     }
 
     @Override

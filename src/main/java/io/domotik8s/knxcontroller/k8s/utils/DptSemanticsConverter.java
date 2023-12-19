@@ -36,9 +36,12 @@ public class DptSemanticsConverter {
 
     }
 
+    public static BooleanSemantic dptToSemantic(String dpt) {
+        return dptSemanticMap.get(dpt);
+    }
+
     public static BooleanSemantic dptToSemantic(DPT dpt) {
-        String dptId = dpt.getID();
-        return dptSemanticMap.get(dptId);
+        return dptSemanticMap.get(dpt.getID());
     }
 
 }

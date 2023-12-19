@@ -1,5 +1,6 @@
 package io.domotik8s.knxcontroller.k8s.reconciler;
 
+import io.domotik8s.knxcontroller.k8s.utils.DptSemanticsConverter;
 import io.domotik8s.model.PropertySpec;
 import io.domotik8s.knxcontroller.k8s.model.KnxBooleanProperty;
 import io.domotik8s.knxcontroller.k8s.model.KnxBooleanPropertyList;
@@ -11,6 +12,7 @@ import io.domotik8s.knxcontroller.knx.convert.StringToGroupAddressConverter;
 import io.domotik8s.model.PropertyAccess;
 import io.domotik8s.model.bool.BooleanPropertyState;
 import io.domotik8s.model.bool.BooleanPropertyStatus;
+import io.domotik8s.model.bool.BooleanSemantic;
 import io.kubernetes.client.extended.controller.reconciler.Reconciler;
 import io.kubernetes.client.extended.controller.reconciler.Request;
 import io.kubernetes.client.extended.controller.reconciler.Result;
@@ -58,7 +60,12 @@ public class BooleanPropertyReconciler implements Reconciler {
 
         KnxBooleanProperty resource = informer.getIndexer().getByKey(key);
 
-        updateAccess(resource);
+        boolean accessUpdated = updateAccess(resource);
+        boolean semanticsUpdated = updateSemantics(resource);
+
+        if (accessUpdated || semanticsUpdated) {
+            client.update(resource);
+        }
 
         // Get desired and current state
         Optional<Boolean> desiredOpt = Optional.ofNullable(resource)
@@ -87,27 +94,29 @@ public class BooleanPropertyReconciler implements Reconciler {
         return new Result(false);
     }
 
-    private void updateAccess(KnxBooleanProperty resource) {
+    private boolean updateAccess(KnxBooleanProperty resource) {
         Optional<KnxBooleanPropertySpec> spec = Optional.ofNullable(resource).map(KnxBooleanProperty::getSpec);
         Optional<KnxPropertyAddress> address = spec
                 .map(KnxBooleanPropertySpec::getAddress);
 
-        if (address.isEmpty()) return;
+        if (address.isEmpty()) return false;
 
-        Set<PropertyAccess> access = Optional.ofNullable(spec.get().getAccess()).orElse(new HashSet<>());
-        spec.get().setAccess(access);
+        Set<PropertyAccess> before = Optional.ofNullable(spec.get().getAccess()).orElse(new HashSet<>());
 
-        access.clear();
+        Set<PropertyAccess> after = new HashSet<>();
         if (address.get().getDpt() != null) {
-            if (address.get().getRead() != null) {
-                access.add(PropertyAccess.READ);
-            }
-            if (address.get().getWrite() != null) {
-                access.add(PropertyAccess.WRITE);
-            }
+            if (address.get().getRead() != null)
+                after.add(PropertyAccess.READ);
+            if (address.get().getWrite() != null)
+                after.add(PropertyAccess.WRITE);
         }
 
-        client.update(resource);
+        if (before.containsAll(after) && after.containsAll(before)) {
+            return false;
+        }
+
+        spec.get().setAccess(after);
+        return true;
     }
 
 
@@ -183,6 +192,22 @@ public class BooleanPropertyReconciler implements Reconciler {
         }
         key.append(request.getName());
         return key.toString();
+    }
+
+    private boolean updateSemantics(KnxBooleanProperty property) {
+        Optional<KnxBooleanPropertySpec> specOpt = Optional.ofNullable(property).map(KnxBooleanProperty::getSpec);
+        Optional<String> dptOpt = specOpt.map(KnxBooleanPropertySpec::getAddress).map(KnxPropertyAddress::getDpt);
+
+        if (specOpt.isPresent() && dptOpt.isPresent()) {
+            KnxBooleanPropertySpec spec = specOpt.get();
+            BooleanSemantic semantic = Optional.ofNullable(property.getSpec().getSemantic()).orElse(new BooleanSemantic());
+            spec.setSemantic(semantic);
+            if (semantic.getMeaning() == null) {
+                spec.setSemantic(DptSemanticsConverter.dptToSemantic(dptOpt.get()));
+                return true;
+            }
+        }
+        return false;
     }
 
 }
