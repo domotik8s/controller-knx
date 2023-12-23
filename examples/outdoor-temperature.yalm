@@ -1,0 +1,12 @@
+apiVersion: domotik8s.io/v1beta1
+kind: NumberProperty
+metadata:
+  name: outdoor-temperature
+  labels:
+    area: "Outdoor"
+    name: "Temperature"
+spec:
+  address:
+    system: "knx"
+    read: "10/2/0"
+    dpt: "9.001"

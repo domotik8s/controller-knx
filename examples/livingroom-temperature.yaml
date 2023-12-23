@@ -1,0 +1,14 @@
+apiVersion: domotik8s.io/v1beta1
+kind: NumberProperty
+metadata:
+  name: livingroom-temperature
+  labels:
+    area: "House"
+    floor: "FirstFloor"
+    room: "LivingRoom"
+    name: "Temperature"
+spec:
+  address:
+    system: "knx"
+    read: "2/0/2"
+    dpt: "9.001"

@@ -1,0 +1,14 @@
+apiVersion: domotik8s.io/v1beta1
+kind: NumberProperty
+metadata:
+  name: bathroom-temperature
+  labels:
+    area: "House"
+    floor: "FirstFloor"
+    room: "Bathroom"
+    name: "Temperature"
+spec:
+  address:
+    system: "knx"
+    read: "2/1/0"
+    dpt: "9.001"

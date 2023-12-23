@@ -1,0 +1,14 @@
+apiVersion: domotik8s.io/v1beta1
+kind: NumberProperty
+metadata:
+  name: techroom-temperature
+  labels:
+    area: "House"
+    floor: "FirstFloor"
+    room: "TechRoom"
+    name: "Temperature"
+spec:
+  address:
+    system: "knx"
+    read: "2/0/1"
+    dpt: "9.001"
