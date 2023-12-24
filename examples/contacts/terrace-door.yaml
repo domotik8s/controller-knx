@@ -1,0 +1,14 @@
+apiVersion: domotik8s.io/v1beta1
+kind: BooleanProperty
+metadata:
+  name: terrace-door
+  labels:
+    area: "House"
+    floor: "GroundFloor"
+    room: "LivingRoom"
+    name: "TerraceDoor"
+spec:
+  address:
+    system: "knx"
+    read: "3/0/2"
+    dpt: "1.018"

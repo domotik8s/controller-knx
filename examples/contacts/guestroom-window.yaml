@@ -1,0 +1,14 @@
+apiVersion: domotik8s.io/v1beta1
+kind: BooleanProperty
+metadata:
+  name: guestroom-window
+  labels:
+    area: "House"
+    floor: "GroundFloor"
+    room: "Guestroom"
+    name: "Window"
+spec:
+  address:
+    system: "knx"
+    read: "3/0/5"
+    dpt: "1.018"

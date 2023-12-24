@@ -1,0 +1,14 @@
+apiVersion: domotik8s.io/v1beta1
+kind: BooleanProperty
+metadata:
+  name: bathroom-window
+  labels:
+    area: "House"
+    floor: "FirstFloor"
+    room: "Bathroom"
+    name: "Window"
+spec:
+  address:
+    system: "knx"
+    read: "3/1/0"
+    dpt: "1.018"

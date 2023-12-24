@@ -1,0 +1,14 @@
+apiVersion: domotik8s.io/v1beta1
+kind: BooleanProperty
+metadata:
+  name: child-room-window-left
+  labels:
+    area: "House"
+    floor: "FirstFloor"
+    room: "Childroom"
+    name: "WindowLeft"
+spec:
+  address:
+    system: "knx"
+    read: "3/1/2"
+    dpt: "1.018"

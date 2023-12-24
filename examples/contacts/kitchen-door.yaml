@@ -1,0 +1,14 @@
+apiVersion: domotik8s.io/v1beta1
+kind: BooleanProperty
+metadata:
+  name: kitchen-door
+  labels:
+    area: "House"
+    floor: "GroundFloor"
+    room: "Kitchen"
+    name: "Door"
+spec:
+  address:
+    system: "knx"
+    read: "3/0/4"
+    dpt: "1.018"
