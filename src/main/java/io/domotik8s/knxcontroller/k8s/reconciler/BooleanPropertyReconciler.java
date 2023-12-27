@@ -60,6 +60,9 @@ public class BooleanPropertyReconciler implements Reconciler {
 
         KnxBooleanProperty resource = informer.getIndexer().getByKey(key);
 
+        if (resource == null)
+            return new Result(false);
+
         boolean accessUpdated = updateAccess(resource);
         boolean semanticsUpdated = updateSemantics(resource);
 
